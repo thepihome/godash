@@ -259,7 +259,7 @@ const CandidateDetails = () => {
                   <option value="">Select a job role</option>
                   {jobRoles
                     .filter(role => role.is_active === 1 || role.is_active === true)
-                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
                     .map((role) => (
                       <option key={role.id} value={role.name}>
                         {role.name}

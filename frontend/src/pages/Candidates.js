@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiFilter, FiSave } from 'react-icons/fi';
+import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiFilter, FiSave, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import './Candidates.css';
 
 const Candidates = () => {
@@ -17,6 +17,10 @@ const Candidates = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSaveKpiModal, setShowSaveKpiModal] = useState(false);
   const [kpiName, setKpiName] = useState('');
+  
+  // Sort state
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -157,6 +161,65 @@ const Candidates = () => {
   };
 
   const hasActiveFilters = Object.values(filters).some(v => v !== '');
+
+  // Handle column sorting
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort candidates
+  const sortedCandidates = useMemo(() => {
+    if (!candidates || !sortColumn) return candidates;
+    
+    return [...candidates].sort((a, b) => {
+      let aValue = a[sortColumn];
+      let bValue = b[sortColumn];
+      
+      // Handle nested properties
+      if (sortColumn === 'name') {
+        aValue = `${a.first_name || ''} ${a.last_name || ''}`.trim();
+        bValue = `${b.first_name || ''} ${b.last_name || ''}`.trim();
+      } else if (sortColumn === 'current_position') {
+        aValue = a.current_job_title || '';
+        bValue = b.current_job_title || '';
+      } else if (sortColumn === 'experience') {
+        aValue = a.years_of_experience || 0;
+        bValue = b.years_of_experience || 0;
+      } else if (sortColumn === 'resumes') {
+        aValue = a.resume_count || 0;
+        bValue = b.resume_count || 0;
+      } else if (sortColumn === 'matches') {
+        aValue = a.match_count || 0;
+        bValue = b.match_count || 0;
+      } else if (sortColumn === 'status') {
+        aValue = a.is_active === 1 || a.is_active === true ? 'Active' : 'Inactive';
+        bValue = b.is_active === 1 || b.is_active === true ? 'Active' : 'Inactive';
+      }
+      
+      // Handle null/undefined values
+      if (aValue == null) aValue = '';
+      if (bValue == null) bValue = '';
+      
+      // Compare values
+      let comparison = 0;
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.localeCompare(bValue, undefined, { sensitivity: 'base' });
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue), undefined, { sensitivity: 'base' });
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [candidates, sortColumn, sortDirection]);
 
   const handleSaveAsKpi = () => {
     if (!kpiName.trim()) {
@@ -705,19 +768,91 @@ const Candidates = () => {
         <table className="table candidates-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Current Position</th>
-              <th>Experience</th>
-              <th>Resumes</th>
-              <th>Matches</th>
-              <th>Status</th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('name')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Name
+                {sortColumn === 'name' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('email')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Email
+                {sortColumn === 'email' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('phone')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Phone
+                {sortColumn === 'phone' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('current_position')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Current Position
+                {sortColumn === 'current_position' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('experience')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Experience
+                {sortColumn === 'experience' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('resumes')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Resumes
+                {sortColumn === 'resumes' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('matches')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Matches
+                {sortColumn === 'matches' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
+              <th 
+                className="sortable" 
+                onClick={() => handleSort('status')}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                Status
+                {sortColumn === 'status' && (
+                  sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
+                )}
+              </th>
             </tr>
           </thead>
           <tbody>
-            {candidates && candidates.length > 0 ? (
-              candidates.map((candidate) => (
+            {sortedCandidates && sortedCandidates.length > 0 ? (
+              sortedCandidates.map((candidate) => (
                 <tr 
                   key={candidate.id} 
                   className="candidate-row"
@@ -932,7 +1067,7 @@ const Candidates = () => {
                       <option value="">Select a job role</option>
                       {jobRoles
                         .filter(role => role.is_active === 1 || role.is_active === true)
-                        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
                         .map((role) => (
                           <option key={role.id} value={role.name}>
                             {role.name}
@@ -1343,7 +1478,7 @@ const Candidates = () => {
                       <option value="">Select a job role</option>
                       {jobRoles
                         .filter(role => role.is_active === 1 || role.is_active === true)
-                        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
                         .map((role) => (
                           <option key={role.id} value={role.name}>
                             {role.name}

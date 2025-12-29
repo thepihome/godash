@@ -221,7 +221,6 @@ CREATE TABLE IF NOT EXISTS job_roles (
   name TEXT NOT NULL UNIQUE,
   description TEXT,
   is_active INTEGER DEFAULT 1,
-  display_order INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );

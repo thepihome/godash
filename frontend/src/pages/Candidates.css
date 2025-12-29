@@ -49,6 +49,14 @@
   font-size: 14px;
 }
 
+.candidates-table th.sortable {
+  transition: background-color 0.2s;
+}
+
+.candidates-table th.sortable:hover {
+  background-color: #e9ecef;
+}
+
 .candidates-table td {
   padding: 15px;
   border-bottom: 1px solid #eee;

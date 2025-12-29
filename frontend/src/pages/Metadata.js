@@ -14,8 +14,7 @@ const Metadata = () => {
   const [roleFormData, setRoleFormData] = useState({
     name: '',
     description: '',
-    is_active: true,
-    display_order: 0
+    is_active: true
   });
 
   // Fetch job roles
@@ -35,7 +34,7 @@ const Metadata = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('job-roles');
         setShowRoleModal(false);
-        setRoleFormData({ name: '', description: '', is_active: true, display_order: 0 });
+        setRoleFormData({ name: '', description: '', is_active: true });
         setEditingRole(null);
       },
       onError: (error) => {
@@ -52,7 +51,7 @@ const Metadata = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('job-roles');
         setShowRoleModal(false);
-        setRoleFormData({ name: '', description: '', is_active: true, display_order: 0 });
+        setRoleFormData({ name: '', description: '', is_active: true });
         setEditingRole(null);
       },
       onError: (error) => {
@@ -77,7 +76,7 @@ const Metadata = () => {
 
   const handleAddRole = () => {
     setEditingRole(null);
-    setRoleFormData({ name: '', description: '', is_active: true, display_order: 0 });
+    setRoleFormData({ name: '', description: '', is_active: true });
     setShowRoleModal(true);
   };
 
@@ -86,8 +85,7 @@ const Metadata = () => {
     setRoleFormData({
       name: role.name,
       description: role.description || '',
-      is_active: role.is_active === 1 || role.is_active === true,
-      display_order: role.display_order || 0
+      is_active: role.is_active === 1 || role.is_active === true
     });
     setShowRoleModal(true);
   };
@@ -179,7 +177,6 @@ const Metadata = () => {
                       <tr>
                         <th>Name</th>
                         <th>Description</th>
-                        <th>Display Order</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
@@ -189,7 +186,6 @@ const Metadata = () => {
                         <tr key={role.id} className="role-row">
                           <td><strong>{role.name}</strong></td>
                           <td>{role.description || '-'}</td>
-                          <td>{role.display_order || 0}</td>
                           <td>
                             <span className={`status-badge ${role.is_active === 1 || role.is_active === true ? 'active' : 'inactive'}`}>
                               {role.is_active === 1 || role.is_active === true ? 'Active' : 'Inactive'}
@@ -257,28 +253,15 @@ const Metadata = () => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Display Order</label>
-                  <input
-                    type="number"
-                    value={roleFormData.display_order}
-                    onChange={(e) => setRoleFormData({ ...roleFormData, display_order: parseInt(e.target.value) || 0 })}
-                    min="0"
-                  />
-                  <p className="form-hint">Lower numbers appear first in the dropdown</p>
-                </div>
-
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    value={roleFormData.is_active ? 'true' : 'false'}
-                    onChange={(e) => setRoleFormData({ ...roleFormData, is_active: e.target.value === 'true' })}
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
-                </div>
+              <div className="form-group">
+                <label>Status</label>
+                <select
+                  value={roleFormData.is_active ? 'true' : 'false'}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, is_active: e.target.value === 'true' })}
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
               </div>
 
               <div className="modal-actions">

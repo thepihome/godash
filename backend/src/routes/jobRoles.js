@@ -24,7 +24,7 @@ export async function handleJobRoles(request, env, user) {
         sql += ' WHERE is_active = 1';
       }
       
-      sql += ' ORDER BY display_order ASC, name ASC';
+      sql += ' ORDER BY created_at ASC';
       
       const roles = await query(env, sql, params);
       
@@ -127,7 +127,7 @@ export async function handleJobRoles(request, env, user) {
 
     try {
       const body = await request.json();
-      const { name, description, is_active, display_order } = body;
+      const { name, description, is_active } = body;
 
       if (!name || !name.trim()) {
         return addCorsHeaders(
@@ -160,13 +160,12 @@ export async function handleJobRoles(request, env, user) {
 
       const result = await execute(
         env,
-        `INSERT INTO job_roles (name, description, is_active, display_order, created_at, updated_at)
-         VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        `INSERT INTO job_roles (name, description, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, datetime('now'), datetime('now'))`,
         [
           name.trim(),
           description || null,
-          is_active !== undefined ? (is_active ? 1 : 0) : 1,
-          display_order || 0
+          is_active !== undefined ? (is_active ? 1 : 0) : 1
         ]
       );
 
@@ -214,7 +213,7 @@ export async function handleJobRoles(request, env, user) {
     try {
       const roleId = parseInt(path.split('/').pop());
       const body = await request.json();
-      const { name, description, is_active, display_order } = body;
+      const { name, description, is_active } = body;
 
       if (isNaN(roleId)) {
         return addCorsHeaders(
@@ -260,19 +259,18 @@ export async function handleJobRoles(request, env, user) {
         }
       }
 
-      await execute(
-        env,
-        `UPDATE job_roles 
-         SET name = ?, description = ?, is_active = ?, display_order = ?, updated_at = datetime('now')
+        await execute(
+          env,
+          `UPDATE job_roles 
+         SET name = ?, description = ?, is_active = ?, updated_at = datetime('now')
          WHERE id = ?`,
-        [
-          name !== undefined ? name.trim() : existing.name,
-          description !== undefined ? description : existing.description,
-          is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
-          display_order !== undefined ? display_order : existing.display_order,
-          roleId
-        ]
-      );
+          [
+            name !== undefined ? name.trim() : existing.name,
+            description !== undefined ? description : existing.description,
+            is_active !== undefined ? (is_active ? 1 : 0) : existing.is_active,
+            roleId
+          ]
+        );
 
       const updatedRole = await queryOne(env, 'SELECT * FROM job_roles WHERE id = ?', [roleId]);
 
