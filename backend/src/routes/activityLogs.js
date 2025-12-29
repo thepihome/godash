@@ -33,6 +33,10 @@ export async function handleActivityLogs(request, env, user) {
       const entityId = searchParams.get('entity_id');
       const limit = parseInt(searchParams.get('limit') || '100');
       const offset = parseInt(searchParams.get('offset') || '0');
+      const search = searchParams.get('search');
+      const dateFrom = searchParams.get('date_from');
+      const dateTo = searchParams.get('date_to');
+      const action = searchParams.get('action');
 
       let sql = `
         SELECT 
@@ -55,6 +59,59 @@ export async function handleActivityLogs(request, env, user) {
         params.push(entityId);
       }
 
+      if (action) {
+        sql += ' AND al.action = ?';
+        params.push(action);
+      }
+
+      if (search) {
+        sql += ' AND (al.description LIKE ? OR al.field_name LIKE ? OR u.first_name || \' \' || u.last_name LIKE ?)';
+        const searchTerm = `%${search}%`;
+        params.push(searchTerm, searchTerm, searchTerm);
+      }
+
+      if (dateFrom) {
+        sql += ' AND DATE(al.created_at) >= DATE(?)';
+        params.push(dateFrom);
+      }
+
+      if (dateTo) {
+        sql += ' AND DATE(al.created_at) <= DATE(?)';
+        params.push(dateTo);
+      }
+
+      // Get total count for pagination (before adding limit/offset)
+      const countParams = [...params]; // Copy params before adding limit/offset
+      let countSql = `
+        SELECT COUNT(*) as total
+        FROM activity_logs al
+        LEFT JOIN users u ON al.user_id = u.id
+        WHERE 1=1
+      `;
+      
+      // Apply same filters as main query
+      if (entityType) {
+        countSql += ' AND al.entity_type = ?';
+      }
+      if (entityId) {
+        countSql += ' AND al.entity_id = ?';
+      }
+      if (action) {
+        countSql += ' AND al.action = ?';
+      }
+      if (search) {
+        countSql += ' AND (al.description LIKE ? OR al.field_name LIKE ? OR u.first_name || \' \' || u.last_name LIKE ?)';
+      }
+      if (dateFrom) {
+        countSql += ' AND DATE(al.created_at) >= DATE(?)';
+      }
+      if (dateTo) {
+        countSql += ' AND DATE(al.created_at) <= DATE(?)';
+      }
+      
+      const countResult = await query(env, countSql, countParams);
+      const totalCount = countResult[0]?.total || 0;
+
       sql += ' ORDER BY al.created_at DESC LIMIT ? OFFSET ?';
       params.push(limit, offset);
 
@@ -74,7 +131,13 @@ export async function handleActivityLogs(request, env, user) {
 
       return addCorsHeaders(
         new Response(
-          JSON.stringify(parsedLogs),
+          JSON.stringify({
+            logs: parsedLogs,
+            total: totalCount,
+            limit,
+            offset,
+            hasMore: offset + parsedLogs.length < totalCount
+          }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         ),
         env,
