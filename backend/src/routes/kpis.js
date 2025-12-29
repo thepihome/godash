@@ -12,6 +12,8 @@ export async function handleKPIs(request, env, user) {
 
   // Get available metric types
   if (path === '/api/kpis/metric-types' && method === 'GET') {
+    console.log('Fetching metric types for user:', user?.id, 'role:', user?.role);
+    
     const metricTypes = [
       { value: 'total_jobs', label: 'Total Active Jobs', roles: ['candidate', 'consultant', 'admin'] },
       { value: 'total_matches', label: 'Total Matches', roles: ['candidate'] },
@@ -23,7 +25,20 @@ export async function handleKPIs(request, env, user) {
       { value: 'total_candidates', label: 'Total Candidates', roles: ['admin', 'consultant'] },
     ];
 
+    if (!user || !user.role) {
+      console.error('User or user role is missing');
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: 'User role not found' }),
+          { status: 401, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+
     const availableTypes = metricTypes.filter(mt => mt.roles.includes(user.role));
+    console.log('Available metric types for role', user.role, ':', availableTypes.length);
     
     return addCorsHeaders(
       new Response(

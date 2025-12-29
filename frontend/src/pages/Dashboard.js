@@ -16,8 +16,17 @@ const Dashboard = () => {
     api.get('/kpis/my-kpis').then(res => res.data)
   );
 
-  const { data: metricTypes } = useQuery('metric-types', () =>
-    api.get('/kpis/metric-types').then(res => res.data)
+  const { data: metricTypes, isLoading: isLoadingMetricTypes, error: metricTypesError } = useQuery(
+    'metric-types',
+    () => api.get('/kpis/metric-types').then(res => {
+      console.log('Metric types response:', res.data);
+      return res.data;
+    }),
+    {
+      onError: (error) => {
+        console.error('Error fetching metric types:', error);
+      }
+    }
   );
 
   const createKpiMutation = useMutation(
@@ -140,18 +149,32 @@ const Dashboard = () => {
               </div>
               <div className="form-group">
                 <label>Metric Type</label>
-                <select
-                  value={kpiForm.metric_type}
-                  onChange={(e) => setKpiForm({ ...kpiForm, metric_type: e.target.value })}
-                  required
-                >
-                  <option value="">Select metric type</option>
-                  {metricTypes?.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+                {isLoadingMetricTypes ? (
+                  <select disabled>
+                    <option>Loading metric types...</option>
+                  </select>
+                ) : metricTypesError ? (
+                  <div style={{ color: 'red', fontSize: '12px' }}>
+                    Error loading metric types. Please refresh the page.
+                  </div>
+                ) : !metricTypes || metricTypes.length === 0 ? (
+                  <div style={{ color: 'orange', fontSize: '12px' }}>
+                    No metric types available for your role.
+                  </div>
+                ) : (
+                  <select
+                    value={kpiForm.metric_type}
+                    onChange={(e) => setKpiForm({ ...kpiForm, metric_type: e.target.value })}
+                    required
+                  >
+                    <option value="">Select metric type</option>
+                    {metricTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="form-group">
                 <label>Display Order</label>
