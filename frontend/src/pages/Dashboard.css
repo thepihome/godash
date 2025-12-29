@@ -80,6 +80,21 @@
   margin: 0;
 }
 
+.kpi-clickable {
+  cursor: pointer;
+}
+
+.kpi-clickable:hover {
+  border: 2px solid #007bff;
+}
+
+.kpi-hint {
+  font-size: 12px;
+  color: #007bff;
+  margin: 5px 0 0 0;
+  font-style: italic;
+}
+
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;

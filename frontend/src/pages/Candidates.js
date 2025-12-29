@@ -1,18 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX } from 'react-icons/fi';
+import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiFilter, FiSave } from 'react-icons/fi';
 import './Candidates.css';
 
 const Candidates = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSaveKpiModal, setShowSaveKpiModal] = useState(false);
+  const [kpiName, setKpiName] = useState('');
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    search: '',
+    city: '',
+    state: '',
+    country: '',
+    current_job_title: '',
+    current_company: '',
+    years_of_experience_min: '',
+    years_of_experience_max: '',
+    availability: '',
+    work_authorization: '',
+    willing_to_relocate: '',
+    has_resume: '',
+    has_matches: '',
+    is_active: '',
+  });
   const [candidateFormData, setCandidateFormData] = useState({
     // User fields
     email: '',
@@ -49,17 +71,87 @@ const Candidates = () => {
     { skills: '', experience_years: '', education: '', summary: '' },
   ]);
 
-  // Get candidates based on role
+  // Initialize filters from URL params
+  useEffect(() => {
+    const urlFilters = {};
+    Object.keys(filters).forEach(key => {
+      const value = searchParams.get(key);
+      if (value) urlFilters[key] = value;
+    });
+    if (Object.keys(urlFilters).length > 0) {
+      setFilters(prev => ({ ...prev, ...urlFilters }));
+      setShowFilters(true);
+    }
+  }, []);
+
+  // Build query params for filters
+  const filterParams = useMemo(() => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
+    return params.toString();
+  }, [filters]);
+
+  // Get candidates based on role with filters
   const { data: candidates, isLoading } = useQuery(
-    ['candidates', user?.role],
+    ['candidates', user?.role, filterParams],
     () => {
-      if (user?.role === 'admin') {
-        return api.get('/candidates').then(res => res.data);
-      } else {
-        return api.get('/candidates/assigned').then(res => res.data);
-      }
+      const endpoint = user?.role === 'admin' ? '/candidates' : '/candidates/assigned';
+      const url = filterParams ? `${endpoint}?${filterParams}` : endpoint;
+      return api.get(url).then(res => res.data);
     }
   );
+
+  // Apply filters to URL
+  useEffect(() => {
+    const newParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) newParams.set(key, value);
+    });
+    setSearchParams(newParams, { replace: true });
+  }, [filters, setSearchParams]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = Object.keys(filters).reduce((acc, key) => {
+      acc[key] = '';
+      return acc;
+    }, {});
+    setFilters(clearedFilters);
+    setSearchParams({}, { replace: true });
+  };
+
+  const hasActiveFilters = Object.values(filters).some(v => v !== '');
+
+  const handleSaveAsKpi = () => {
+    if (!kpiName.trim()) {
+      alert('Please enter a name for the KPI');
+      return;
+    }
+    // Save KPI with filter configuration
+    const kpiData = {
+      name: kpiName,
+      description: `Filtered candidates: ${Object.entries(filters).filter(([_, v]) => v).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+      metric_type: 'custom_filter',
+      display_order: 0,
+      query_config: JSON.stringify({ type: 'candidate_filter', filters })
+    };
+    
+    api.post('/kpis', kpiData)
+      .then(() => {
+        setShowSaveKpiModal(false);
+        setKpiName('');
+        alert('KPI saved successfully!');
+      })
+      .catch(err => {
+        console.error('Error saving KPI:', err);
+        alert('Failed to save KPI');
+      });
+  };
 
   const updateCandidateMutation = useMutation(
     async ({ candidateId, candidateData, resumes, existingResumeIds }) => {
@@ -352,15 +444,226 @@ const Candidates = () => {
     <div className="candidates-page">
       <div className="page-header">
         <h1>{user?.role === 'admin' ? 'All Candidates' : 'Assigned Candidates'}</h1>
-        {user?.role === 'admin' && (
+        <div style={{ display: 'flex', gap: '10px' }}>
           <button 
-            className="btn btn-primary"
-            onClick={() => setShowAddModal(true)}
+            className="btn btn-secondary"
+            onClick={() => setShowFilters(!showFilters)}
           >
-            <FiPlus /> Add Candidate
+            <FiFilter /> {showFilters ? 'Hide' : 'Show'} Filters
           </button>
-        )}
+          {hasActiveFilters && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => setShowSaveKpiModal(true)}
+            >
+              <FiSave /> Save as KPI
+            </button>
+          )}
+          {user?.role === 'admin' && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => setShowAddModal(true)}
+            >
+              <FiPlus /> Add Candidate
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="candidates-filters">
+          <div className="filters-header">
+            <h3>Filters</h3>
+            {hasActiveFilters && (
+              <button className="btn btn-sm btn-secondary" onClick={handleClearFilters}>
+                Clear All
+              </button>
+            )}
+          </div>
+          <div className="filters-grid">
+            <div className="filter-group">
+              <label>Search</label>
+              <input
+                type="text"
+                placeholder="Name, email, or company..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>City</label>
+              <input
+                type="text"
+                placeholder="City"
+                value={filters.city}
+                onChange={(e) => handleFilterChange('city', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>State</label>
+              <input
+                type="text"
+                placeholder="State"
+                value={filters.state}
+                onChange={(e) => handleFilterChange('state', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Country</label>
+              <input
+                type="text"
+                placeholder="Country"
+                value={filters.country}
+                onChange={(e) => handleFilterChange('country', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Job Title</label>
+              <input
+                type="text"
+                placeholder="Current job title"
+                value={filters.current_job_title}
+                onChange={(e) => handleFilterChange('current_job_title', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Company</label>
+              <input
+                type="text"
+                placeholder="Current company"
+                value={filters.current_company}
+                onChange={(e) => handleFilterChange('current_company', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Experience (Min Years)</label>
+              <input
+                type="number"
+                placeholder="Min"
+                value={filters.years_of_experience_min}
+                onChange={(e) => handleFilterChange('years_of_experience_min', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Experience (Max Years)</label>
+              <input
+                type="number"
+                placeholder="Max"
+                value={filters.years_of_experience_max}
+                onChange={(e) => handleFilterChange('years_of_experience_max', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Availability</label>
+              <select
+                value={filters.availability}
+                onChange={(e) => handleFilterChange('availability', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="available">Available</option>
+                <option value="not-available">Not Available</option>
+                <option value="available-soon">Available Soon</option>
+                <option value="contract-only">Contract Only</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Work Authorization</label>
+              <input
+                type="text"
+                placeholder="e.g., US Citizen, H1B"
+                value={filters.work_authorization}
+                onChange={(e) => handleFilterChange('work_authorization', e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label>Willing to Relocate</label>
+              <select
+                value={filters.willing_to_relocate}
+                onChange={(e) => handleFilterChange('willing_to_relocate', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Has Resume</label>
+              <select
+                value={filters.has_resume}
+                onChange={(e) => handleFilterChange('has_resume', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Has Matches</label>
+              <select
+                value={filters.has_matches}
+                onChange={(e) => handleFilterChange('has_matches', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Status</label>
+              <select
+                value={filters.is_active}
+                onChange={(e) => handleFilterChange('is_active', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+          </div>
+          {hasActiveFilters && (
+            <div className="filters-info">
+              <span>Showing {candidates?.length || 0} candidate(s) with filters applied</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Save as KPI Modal */}
+      {showSaveKpiModal && (
+        <div className="modal-overlay" onClick={() => setShowSaveKpiModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Save Filter as KPI</h2>
+            <div className="form-group">
+              <label>KPI Name</label>
+              <input
+                type="text"
+                placeholder="e.g., Available Candidates in SF"
+                value={kpiName}
+                onChange={(e) => setKpiName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="modal-actions">
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setShowSaveKpiModal(false);
+                  setKpiName('');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleSaveAsKpi}
+              >
+                Save KPI
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="candidates-table-container">
         <table className="table candidates-table">

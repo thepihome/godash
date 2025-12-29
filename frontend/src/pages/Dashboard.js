@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
@@ -7,6 +8,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showKpiModal, setShowKpiModal] = useState(false);
   const [editingKpi, setEditingKpi] = useState(null);
@@ -102,23 +104,49 @@ const Dashboard = () => {
 
       <div className="kpi-grid">
         {kpis && kpis.length > 0 ? (
-          kpis.map((kpi) => (
-            <div key={kpi.id} className="kpi-card">
-              <div className="kpi-header">
-                <h3>{kpi.name}</h3>
-                <div className="kpi-actions">
-                  <button onClick={() => handleEditKpi(kpi)} className="btn-icon">
-                    <FiEdit />
-                  </button>
-                  <button onClick={() => deleteKpiMutation.mutate(kpi.id)} className="btn-icon">
-                    <FiTrash2 />
-                  </button>
+          kpis.map((kpi) => {
+            const isClickable = kpi.metric_type === 'custom_filter' && kpi.query_config;
+            const handleKpiClick = () => {
+              if (isClickable) {
+                try {
+                  const config = JSON.parse(kpi.query_config);
+                  if (config.type === 'candidate_filter' && config.filters) {
+                    const params = new URLSearchParams();
+                    Object.entries(config.filters).forEach(([key, value]) => {
+                      if (value) params.set(key, value);
+                    });
+                    navigate(`/candidates?${params.toString()}`);
+                  }
+                } catch (e) {
+                  console.error('Error parsing KPI config:', e);
+                }
+              }
+            };
+
+            return (
+              <div 
+                key={kpi.id} 
+                className={`kpi-card ${isClickable ? 'kpi-clickable' : ''}`}
+                onClick={isClickable ? handleKpiClick : undefined}
+                style={isClickable ? { cursor: 'pointer' } : {}}
+              >
+                <div className="kpi-header">
+                  <h3>{kpi.name}</h3>
+                  <div className="kpi-actions" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => handleEditKpi(kpi)} className="btn-icon">
+                      <FiEdit />
+                    </button>
+                    <button onClick={() => deleteKpiMutation.mutate(kpi.id)} className="btn-icon">
+                      <FiTrash2 />
+                    </button>
+                  </div>
                 </div>
+                <div className="kpi-value">{kpi.current_value ?? 'N/A'}</div>
+                {kpi.description && <p className="kpi-description">{kpi.description}</p>}
+                {isClickable && <p className="kpi-hint">Click to view filtered candidates</p>}
               </div>
-              <div className="kpi-value">{kpi.current_value ?? 'N/A'}</div>
-              {kpi.description && <p className="kpi-description">{kpi.description}</p>}
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="empty-state">
             <p>No KPIs configured. Click "Add KPI" to create your first KPI.</p>

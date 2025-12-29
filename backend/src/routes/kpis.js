@@ -61,9 +61,21 @@ export async function handleKPIs(request, env, user) {
         [user.id]
       );
 
+      // Parse query_config JSON if present
+      const parsedKpis = kpis.map(kpi => {
+        if (kpi.query_config && typeof kpi.query_config === 'string') {
+          try {
+            kpi.query_config = JSON.parse(kpi.query_config);
+          } catch (e) {
+            kpi.query_config = null;
+          }
+        }
+        return kpi;
+      });
+
       // Calculate current values for each KPI
       const kpisWithValues = await Promise.all(
-        kpis.map(async (kpi) => {
+        parsedKpis.map(async (kpi) => {
           let currentValue = null;
 
           try {
@@ -144,6 +156,109 @@ export async function handleKPIs(request, env, user) {
                 currentValue = parseInt(candidatesResult[0]?.count || 0);
                 break;
 
+              case 'custom_filter':
+                // Parse query_config to get filters
+                try {
+                  const queryConfig = kpi.query_config ? JSON.parse(kpi.query_config) : null;
+                  if (queryConfig && queryConfig.type === 'candidate_filter' && queryConfig.filters) {
+                    // Build filter query similar to candidates endpoint
+                    let whereConditions = ["u.role = 'candidate'"];
+                    const filterParams = [];
+
+                    const filters = queryConfig.filters;
+                    
+                    if (filters.search) {
+                      whereConditions.push('(u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR cp.current_company LIKE ?)');
+                      const searchTerm = `%${filters.search}%`;
+                      filterParams.push(searchTerm, searchTerm, searchTerm, searchTerm);
+                    }
+
+                    if (filters.city) {
+                      whereConditions.push('cp.city LIKE ?');
+                      filterParams.push(`%${filters.city}%`);
+                    }
+
+                    if (filters.state) {
+                      whereConditions.push('cp.state LIKE ?');
+                      filterParams.push(`%${filters.state}%`);
+                    }
+
+                    if (filters.country) {
+                      whereConditions.push('cp.country LIKE ?');
+                      filterParams.push(`%${filters.country}%`);
+                    }
+
+                    if (filters.current_job_title) {
+                      whereConditions.push('cp.current_job_title LIKE ?');
+                      filterParams.push(`%${filters.current_job_title}%`);
+                    }
+
+                    if (filters.current_company) {
+                      whereConditions.push('cp.current_company LIKE ?');
+                      filterParams.push(`%${filters.current_company}%`);
+                    }
+
+                    if (filters.years_of_experience_min) {
+                      whereConditions.push('cp.years_of_experience >= ?');
+                      filterParams.push(parseInt(filters.years_of_experience_min));
+                    }
+
+                    if (filters.years_of_experience_max) {
+                      whereConditions.push('cp.years_of_experience <= ?');
+                      filterParams.push(parseInt(filters.years_of_experience_max));
+                    }
+
+                    if (filters.availability) {
+                      whereConditions.push('cp.availability = ?');
+                      filterParams.push(filters.availability);
+                    }
+
+                    if (filters.work_authorization) {
+                      whereConditions.push('cp.work_authorization LIKE ?');
+                      filterParams.push(`%${filters.work_authorization}%`);
+                    }
+
+                    if (filters.willing_to_relocate === 'true') {
+                      whereConditions.push('cp.willing_to_relocate = 1');
+                    } else if (filters.willing_to_relocate === 'false') {
+                      whereConditions.push('(cp.willing_to_relocate = 0 OR cp.willing_to_relocate IS NULL)');
+                    }
+
+                    if (filters.has_resume === 'true') {
+                      whereConditions.push('(SELECT COUNT(*) FROM resumes r WHERE r.user_id = u.id) > 0');
+                    } else if (filters.has_resume === 'false') {
+                      whereConditions.push('(SELECT COUNT(*) FROM resumes r WHERE r.user_id = u.id) = 0');
+                    }
+
+                    if (filters.has_matches === 'true') {
+                      whereConditions.push('(SELECT COUNT(*) FROM job_matches jm WHERE jm.candidate_id = u.id) > 0');
+                    } else if (filters.has_matches === 'false') {
+                      whereConditions.push('(SELECT COUNT(*) FROM job_matches jm WHERE jm.candidate_id = u.id) = 0');
+                    }
+
+                    if (filters.is_active === 'true') {
+                      whereConditions.push('u.is_active = 1');
+                    } else if (filters.is_active === 'false') {
+                      whereConditions.push('u.is_active = 0');
+                    }
+
+                    const whereClause = whereConditions.join(' AND ');
+                    const countResult = await query(
+                      env,
+                      `SELECT COUNT(*) as count 
+                       FROM users u
+                       LEFT JOIN candidate_profiles cp ON u.id = cp.user_id
+                       WHERE ${whereClause}`,
+                      filterParams
+                    );
+                    currentValue = parseInt(countResult[0]?.count || 0);
+                  }
+                } catch (error) {
+                  console.error('Error calculating custom filter KPI:', error);
+                  currentValue = null;
+                }
+                break;
+
               default:
                 currentValue = null;
             }
@@ -184,7 +299,7 @@ export async function handleKPIs(request, env, user) {
   if (path === '/api/kpis' && method === 'POST') {
     try {
       const body = await request.json();
-      const { name, description, metric_type, display_order } = body;
+      const { name, description, metric_type, display_order, query_config } = body;
 
       if (!name || !metric_type) {
         return addCorsHeaders(
@@ -197,11 +312,13 @@ export async function handleKPIs(request, env, user) {
         );
       }
 
+      const queryConfigStr = query_config ? JSON.stringify(query_config) : null;
+
       const result = await execute(
         env,
-        `INSERT INTO kpis (user_id, name, description, metric_type, display_order)
-         VALUES (?, ?, ?, ?, ?)`,
-        [user.id, name, description || '', metric_type, display_order || 0]
+        `INSERT INTO kpis (user_id, name, description, metric_type, display_order, query_config)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [user.id, name, description || '', metric_type, display_order || 0, queryConfigStr]
       );
 
       const kpiId = result.meta?.last_row_id || result.lastInsertRowid;
@@ -210,6 +327,15 @@ export async function handleKPIs(request, env, user) {
         'SELECT * FROM kpis WHERE id = ?',
         [kpiId]
       );
+
+      // Parse query_config if present
+      if (newKpi.query_config && typeof newKpi.query_config === 'string') {
+        try {
+          newKpi.query_config = JSON.parse(newKpi.query_config);
+        } catch (e) {
+          newKpi.query_config = null;
+        }
+      }
 
       return addCorsHeaders(
         new Response(
@@ -256,12 +382,16 @@ export async function handleKPIs(request, env, user) {
       }
 
       const body = await request.json();
-      const { name, description, metric_type, display_order, is_active } = body;
+      const { name, description, metric_type, display_order, is_active, query_config } = body;
+
+      const queryConfigStr = query_config !== undefined 
+        ? (query_config ? JSON.stringify(query_config) : null)
+        : existingKpi.query_config;
 
       await execute(
         env,
         `UPDATE kpis SET name = ?, description = ?, metric_type = ?, display_order = ?, 
-         is_active = ?, updated_at = datetime('now')
+         is_active = ?, query_config = ?, updated_at = datetime('now')
          WHERE id = ?`,
         [
           name,
@@ -269,6 +399,7 @@ export async function handleKPIs(request, env, user) {
           metric_type,
           display_order || 0,
           is_active !== undefined ? (is_active ? 1 : 0) : existingKpi.is_active,
+          queryConfigStr,
           kpiId
         ]
       );
@@ -278,6 +409,15 @@ export async function handleKPIs(request, env, user) {
         'SELECT * FROM kpis WHERE id = ?',
         [kpiId]
       );
+
+      // Parse query_config if present
+      if (updatedKpi.query_config && typeof updatedKpi.query_config === 'string') {
+        try {
+          updatedKpi.query_config = JSON.parse(updatedKpi.query_config);
+        } catch (e) {
+          updatedKpi.query_config = null;
+        }
+      }
 
       return addCorsHeaders(
         new Response(
