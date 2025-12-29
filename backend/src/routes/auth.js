@@ -124,6 +124,22 @@ export async function handleAuth(request, env) {
         throw new Error('User was not created successfully');
       }
 
+      // Create candidate profile if user is a candidate
+      if (user.role === 'candidate') {
+        try {
+          await execute(
+            env,
+            `INSERT INTO candidate_profiles (user_id) VALUES (?)`,
+            [userId]
+          );
+          console.log('Candidate profile created for user ID:', userId);
+        } catch (profileError) {
+          console.error('Error creating candidate profile:', profileError);
+          // Don't fail registration if profile creation fails, but log it
+          // The profile can be created later if needed
+        }
+      }
+
       // Generate token
       const token = createJWT(
         { userId: user.id },

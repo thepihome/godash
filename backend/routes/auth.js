@@ -29,6 +29,20 @@ router.post('/register', async (req, res) => {
 
     const user = result.rows[0];
 
+    // Create candidate profile if user is a candidate
+    if (user.role === 'candidate') {
+      try {
+        await db.query(
+          'INSERT INTO candidate_profiles (user_id) VALUES ($1)',
+          [user.id]
+        );
+      } catch (profileError) {
+        console.error('Error creating candidate profile:', profileError);
+        // Don't fail registration if profile creation fails, but log it
+        // The profile can be created later if needed
+      }
+    }
+
     // Generate token
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRE || '7d',
