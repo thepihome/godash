@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiMenu, FiX, FiHome, FiBriefcase, FiFileText, FiUsers, FiClock, FiDatabase, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiX, FiHome, FiBriefcase, FiFileText, FiUsers, FiClock, FiDatabase, FiSettings, FiLogOut, FiLayers } from 'react-icons/fi';
 import './Layout.css';
 
 const Layout = ({ children }) => {
@@ -23,6 +23,7 @@ const Layout = ({ children }) => {
     { path: '/candidates', label: 'Candidates', icon: FiUsers, roles: ['consultant', 'admin'], permission: 'tab_candidates' },
     { path: '/timesheets', label: 'Timesheets', icon: FiClock, roles: ['consultant', 'admin'], permission: 'tab_timesheets' },
     { path: '/crm', label: 'CRM', icon: FiDatabase, roles: ['consultant', 'admin'], permission: 'tab_crm' },
+    { path: '/metadata', label: 'Metadata', icon: FiLayers, roles: ['admin'], permission: 'tab_metadata' },
     { path: '/settings', label: 'Settings', icon: FiSettings, roles: ['candidate', 'consultant', 'admin'], permission: 'tab_settings' },
   ];
 

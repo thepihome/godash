@@ -36,6 +36,15 @@ const CandidateDetails = () => {
     }
   );
 
+  // Fetch job roles for dropdown
+  const { data: jobRoles = [] } = useQuery(
+    ['job-roles'],
+    () => api.get('/job-roles').then(res => res.data),
+    {
+      enabled: isEditing
+    }
+  );
+
   // Build activity logs query params
   const activityLogsParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -242,13 +251,34 @@ const CandidateDetails = () => {
             <div className="form-row">
               <div className="form-group">
                 <label>Current Job Title</label>
-                <input
-                  type="text"
+                <select
                   name="current_job_title"
                   value={profileData.current_job_title || ''}
                   onChange={handleInputChange}
+                >
+                  <option value="">Select a job role</option>
+                  {jobRoles
+                    .filter(role => role.is_active === 1 || role.is_active === true)
+                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                    .map((role) => (
+                      <option key={role.id} value={role.name}>
+                        {role.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Secondary Job Title</label>
+                <input
+                  type="text"
+                  name="secondary_job_title"
+                  value={profileData.secondary_job_title || ''}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Senior Software Engineer"
                 />
               </div>
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label>Current Company</label>
                 <input

@@ -141,7 +141,7 @@ export async function handleCandidateProfiles(request, env, user) {
         const fields = [
           'date_of_birth', 'address', 'city', 'state', 'country', 'zip_code',
           'linkedin_url', 'portfolio_url', 'github_url', 'current_job_title',
-          'current_company', 'years_of_experience', 'availability',
+          'secondary_job_title', 'current_company', 'years_of_experience', 'availability',
           'expected_salary_min', 'expected_salary_max', 'work_authorization',
           'willing_to_relocate', 'preferred_locations', 'summary', 'additional_notes'
         ];
@@ -209,7 +209,7 @@ export async function handleCandidateProfiles(request, env, user) {
         const fields = [
           'date_of_birth', 'address', 'city', 'state', 'country', 'zip_code',
           'linkedin_url', 'portfolio_url', 'github_url', 'current_job_title',
-          'current_company', 'years_of_experience', 'availability',
+          'secondary_job_title', 'current_company', 'years_of_experience', 'availability',
           'expected_salary_min', 'expected_salary_max', 'work_authorization',
           'willing_to_relocate', 'preferred_locations', 'summary', 'additional_notes'
         ];

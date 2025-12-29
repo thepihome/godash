@@ -53,6 +53,7 @@ const Candidates = () => {
     portfolio_url: '',
     github_url: '',
     current_job_title: '',
+    secondary_job_title: '',
     current_company: '',
     years_of_experience: '',
     availability: 'available',
@@ -116,6 +117,15 @@ const Candidates = () => {
     },
     {
       enabled: !!user?.role
+    }
+  );
+
+  // Fetch job roles for dropdown
+  const { data: jobRoles = [] } = useQuery(
+    ['job-roles'],
+    () => api.get('/job-roles').then(res => res.data),
+    {
+      enabled: showAddModal || showEditModal
     }
   );
 
@@ -207,6 +217,7 @@ const Candidates = () => {
         portfolio_url: candidateData.portfolio_url || null,
         github_url: candidateData.github_url || null,
         current_job_title: candidateData.current_job_title || null,
+        secondary_job_title: candidateData.secondary_job_title || null,
         current_company: candidateData.current_company || null,
         years_of_experience: candidateData.years_of_experience ? parseInt(candidateData.years_of_experience) : null,
         availability: candidateData.availability || null,
@@ -301,6 +312,7 @@ const Candidates = () => {
         portfolio_url: candidateData.portfolio_url || null,
         github_url: candidateData.github_url || null,
         current_job_title: candidateData.current_job_title || null,
+        secondary_job_title: candidateData.secondary_job_title || null,
         current_company: candidateData.current_company || null,
         years_of_experience: candidateData.years_of_experience ? parseInt(candidateData.years_of_experience) : null,
         availability: candidateData.availability || null,
@@ -913,13 +925,32 @@ const Candidates = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label>Current Job Title</label>
-                    <input
-                      type="text"
+                    <select
                       value={candidateFormData.current_job_title}
                       onChange={(e) => setCandidateFormData({ ...candidateFormData, current_job_title: e.target.value })}
-                      placeholder="e.g., Software Engineer"
+                    >
+                      <option value="">Select a job role</option>
+                      {jobRoles
+                        .filter(role => role.is_active === 1 || role.is_active === true)
+                        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                        .map((role) => (
+                          <option key={role.id} value={role.name}>
+                            {role.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Secondary Job Title</label>
+                    <input
+                      type="text"
+                      value={candidateFormData.secondary_job_title}
+                      onChange={(e) => setCandidateFormData({ ...candidateFormData, secondary_job_title: e.target.value })}
+                      placeholder="e.g., Senior Software Engineer"
                     />
                   </div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Current Company</label>
                     <input
@@ -1305,13 +1336,32 @@ const Candidates = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label>Current Job Title</label>
-                    <input
-                      type="text"
+                    <select
                       value={candidateFormData.current_job_title}
                       onChange={(e) => setCandidateFormData({ ...candidateFormData, current_job_title: e.target.value })}
-                      placeholder="e.g., Software Engineer"
+                    >
+                      <option value="">Select a job role</option>
+                      {jobRoles
+                        .filter(role => role.is_active === 1 || role.is_active === true)
+                        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                        .map((role) => (
+                          <option key={role.id} value={role.name}>
+                            {role.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Secondary Job Title</label>
+                    <input
+                      type="text"
+                      value={candidateFormData.secondary_job_title}
+                      onChange={(e) => setCandidateFormData({ ...candidateFormData, secondary_job_title: e.target.value })}
+                      placeholder="e.g., Senior Software Engineer"
                     />
                   </div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Current Company</label>
                     <input

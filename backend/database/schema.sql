@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS candidate_profiles (
   portfolio_url VARCHAR(500),
   github_url VARCHAR(500),
   current_job_title VARCHAR(255),
+  secondary_job_title VARCHAR(255),
   current_company VARCHAR(255),
   years_of_experience INTEGER,
   availability VARCHAR(50),
@@ -269,6 +270,17 @@ SELECT 'candidate', id FROM permissions WHERE name IN (
   'kpi_manage'
 )
 ON CONFLICT DO NOTHING;
+
+-- Job roles table (metadata for standard job titles)
+CREATE TABLE IF NOT EXISTS job_roles (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Activity logs table (tracks all dashboard activities)
 CREATE TABLE IF NOT EXISTS activity_logs (

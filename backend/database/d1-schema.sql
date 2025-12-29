@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS candidate_profiles (
   portfolio_url TEXT,
   github_url TEXT,
   current_job_title TEXT,
+  secondary_job_title TEXT,
   current_company TEXT,
   years_of_experience INTEGER,
   availability TEXT,
@@ -212,6 +213,17 @@ CREATE TABLE IF NOT EXISTS group_permissions (
   permission_id INTEGER REFERENCES permissions(id) ON DELETE CASCADE,
   granted INTEGER DEFAULT 1,
   UNIQUE(group_id, permission_id)
+);
+
+-- Job roles table (metadata for standard job titles)
+CREATE TABLE IF NOT EXISTS job_roles (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT,
+  is_active INTEGER DEFAULT 1,
+  display_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
 );
 
 -- Activity logs table (tracks all dashboard activities)
