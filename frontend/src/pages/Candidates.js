@@ -71,10 +71,19 @@ const Candidates = () => {
     { skills: '', experience_years: '', education: '', summary: '' },
   ]);
 
-  // Initialize filters from URL params
+  // Track if we've initialized from URL params
+  const initializedFromUrl = useRef(false);
+
+  // Initialize filters from URL params (only on mount)
   useEffect(() => {
+    if (initializedFromUrl.current) return;
+    initializedFromUrl.current = true;
+    
     const urlFilters = {};
-    Object.keys(filters).forEach(key => {
+    const filterKeys = ['search', 'city', 'state', 'country', 'current_job_title', 'current_company', 
+                       'years_of_experience_min', 'years_of_experience_max', 'availability', 
+                       'work_authorization', 'willing_to_relocate', 'has_resume', 'has_matches', 'is_active'];
+    filterKeys.forEach(key => {
       const value = searchParams.get(key);
       if (value) urlFilters[key] = value;
     });
@@ -82,7 +91,7 @@ const Candidates = () => {
       setFilters(prev => ({ ...prev, ...urlFilters }));
       setShowFilters(true);
     }
-  }, []);
+  }, [searchParams]);
 
   // Build query params for filters
   const filterParams = useMemo(() => {
@@ -103,8 +112,13 @@ const Candidates = () => {
     }
   );
 
-  // Apply filters to URL
+  // Apply filters to URL (skip initial mount to avoid overwriting URL params)
+  const isInitialMount = useRef(true);
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     const newParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value) newParams.set(key, value);
