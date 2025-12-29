@@ -465,10 +465,11 @@ const Candidates = () => {
     <div className="candidates-page">
       <div className="page-header">
         <h1>{user?.role === 'admin' ? 'All Candidates' : 'Assigned Candidates'}</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             className="btn btn-secondary"
             onClick={() => setShowFilters(!showFilters)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <FiFilter /> {showFilters ? 'Hide' : 'Show'} Filters
           </button>
@@ -476,6 +477,7 @@ const Candidates = () => {
             <button 
               className="btn btn-primary"
               onClick={() => setShowSaveKpiModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <FiSave /> Save as KPI
             </button>
@@ -484,6 +486,7 @@ const Candidates = () => {
             <button 
               className="btn btn-primary"
               onClick={() => setShowAddModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <FiPlus /> Add Candidate
             </button>
