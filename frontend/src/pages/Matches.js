@@ -3,14 +3,13 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiFilter, FiSearch, FiChevronDown, FiChevronUp, FiUser, FiBriefcase, FiX, FiRefreshCw } from 'react-icons/fi';
+import { FiFilter, FiChevronDown, FiChevronUp, FiUser, FiX, FiRefreshCw } from 'react-icons/fi';
 import './Matches.css';
 
 const Matches = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [viewMode, setViewMode] = useState('jobs'); // 'jobs' or 'candidates'
   const [groupBy, setGroupBy] = useState('none'); // 'none', 'job', 'classification', 'score'
   const [filterJob, setFilterJob] = useState('');
   const [filterCandidate, setFilterCandidate] = useState('');
@@ -194,7 +193,7 @@ const Matches = () => {
   return (
     <div className="matches-page">
       <div className="page-header">
-        <h1>Job Matches</h1>
+      <h1>Job Matches</h1>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             className="btn btn-secondary"
@@ -312,31 +311,31 @@ const Matches = () => {
       <div className="matches-content">
         {user?.role === 'candidate' ? (
           // Candidate view - show their matches
-          <div className="matches-list">
+      <div className="matches-list">
             {processedMatches && processedMatches.length > 0 ? (
               processedMatches.map((match) => (
-                <div key={match.id} className="match-card">
-                  <div className="match-header">
-                    <div>
+            <div key={match.id} className="match-card">
+              <div className="match-header">
+                <div>
                       <h3 onClick={() => navigate(`/jobs/${match.job_id}`)} style={{ cursor: 'pointer' }}>
                         {match.title || match.job_title}
-                      </h3>
-                      <p className="match-company">{match.company}</p>
-                    </div>
-                    <div className="match-score">
-                      <span className={`badge badge-${getScoreColor(match.match_score)}`}>
-                        {match.match_score}% Match
-                      </span>
-                    </div>
-                  </div>
-                  {match.location && (
-                    <p className="match-location">📍 {match.location}</p>
-                  )}
-                  {match.status && (
-                    <p className="match-status">
+                  </h3>
+                  <p className="match-company">{match.company}</p>
+                </div>
+                <div className="match-score">
+                  <span className={`badge badge-${getScoreColor(match.match_score)}`}>
+                    {match.match_score}% Match
+                  </span>
+                </div>
+              </div>
+              {match.location && (
+                <p className="match-location">📍 {match.location}</p>
+              )}
+              {match.status && (
+                <p className="match-status">
                       Status: <span className={`badge badge-${getStatusColor(match.status)}`}>{match.status}</span>
-                    </p>
-                  )}
+                </p>
+              )}
                 </div>
               ))
             ) : (
@@ -615,11 +614,11 @@ const Matches = () => {
                           <div className="empty-state">No candidates matched</div>
                         )}
                       </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">No matches found</div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="empty-state">No matches found</div>
               )
             )}
           </div>
