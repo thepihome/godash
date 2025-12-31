@@ -21,7 +21,10 @@ export async function handleJobs(request, env, user) {
       const employment_type = searchParams.get('employment_type');
       const include_deleted = searchParams.get('include_deleted');
 
-      let sql = 'SELECT * FROM jobs WHERE 1=1';
+      let sql = `SELECT j.*, jr.name as job_classification_name 
+                 FROM jobs j 
+                 LEFT JOIN job_roles jr ON j.job_classification = jr.id 
+                 WHERE 1=1`;
       const params = [];
 
       if (include_deleted !== 'true') {
@@ -98,7 +101,12 @@ export async function handleJobs(request, env, user) {
   if (singleJobMatch && method === 'GET') {
     try {
       const jobId = singleJobMatch[1];
-      const job = await queryOne(env, 'SELECT * FROM jobs WHERE id = ?', [jobId]);
+      const job = await queryOne(env, 
+        `SELECT j.*, jr.name as job_classification_name 
+         FROM jobs j 
+         LEFT JOIN job_roles jr ON j.job_classification = jr.id 
+         WHERE j.id = ?`, 
+        [jobId]);
 
       if (!job) {
         return addCorsHeaders(
@@ -165,18 +173,18 @@ export async function handleJobs(request, env, user) {
     try {
       const body = await request.json();
       const {
-        title, description, company, location, salary_min, salary_max,
+        title, job_classification, description, company, location, salary_min, salary_max,
         employment_type, required_skills, preferred_skills, experience_level,
         external_apply_link, status,
       } = body;
 
       const result = await execute(
         env,
-        `INSERT INTO jobs (title, description, company, location, salary_min, salary_max,
+        `INSERT INTO jobs (title, job_classification, description, company, location, salary_min, salary_max,
          employment_type, required_skills, preferred_skills, experience_level, external_apply_link, status, posted_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          title, description, company, location, salary_min, salary_max,
+          title, job_classification || null, description, company, location, salary_min, salary_max,
           employment_type,
           required_skills ? JSON.stringify(required_skills) : '[]',
           preferred_skills ? JSON.stringify(preferred_skills) : '[]',
@@ -186,7 +194,12 @@ export async function handleJobs(request, env, user) {
       );
 
       const jobId = result.meta.last_row_id;
-      const job = await queryOne(env, 'SELECT * FROM jobs WHERE id = ?', [jobId]);
+      const job = await queryOne(env, 
+        `SELECT j.*, jr.name as job_classification_name 
+         FROM jobs j 
+         LEFT JOIN job_roles jr ON j.job_classification = jr.id 
+         WHERE j.id = ?`, 
+        [jobId]);
 
       // Parse JSON fields
       if (job.required_skills) {
@@ -201,6 +214,17 @@ export async function handleJobs(request, env, user) {
           job.preferred_skills = JSON.parse(job.preferred_skills);
         } catch (e) {
           job.preferred_skills = [];
+        }
+      }
+
+      // Auto-match candidates if job has classification
+      if (job_classification) {
+        try {
+          const { autoMatchByClassification } = await import('./matches.js');
+          await autoMatchByClassification(env, jobId);
+        } catch (e) {
+          console.error('Error auto-matching candidates:', e);
+          // Don't fail the job creation if matching fails
         }
       }
 
@@ -243,19 +267,19 @@ export async function handleJobs(request, env, user) {
       const jobId = singleJobMatch[1];
       const body = await request.json();
       const {
-        title, description, company, location, salary_min, salary_max,
+        title, job_classification, description, company, location, salary_min, salary_max,
         employment_type, required_skills, preferred_skills, experience_level,
         external_apply_link, status,
       } = body;
 
       await execute(
         env,
-        `UPDATE jobs SET title = ?, description = ?, company = ?, location = ?,
+        `UPDATE jobs SET title = ?, job_classification = ?, description = ?, company = ?, location = ?,
          salary_min = ?, salary_max = ?, employment_type = ?, required_skills = ?,
          preferred_skills = ?, experience_level = ?, external_apply_link = ?, status = ?, updated_at = datetime('now')
          WHERE id = ?`,
         [
-          title, description, company, location, salary_min, salary_max,
+          title, job_classification || null, description, company, location, salary_min, salary_max,
           employment_type,
           required_skills ? JSON.stringify(required_skills) : '[]',
           preferred_skills ? JSON.stringify(preferred_skills) : '[]',
@@ -263,7 +287,12 @@ export async function handleJobs(request, env, user) {
         ]
       );
 
-      const job = await queryOne(env, 'SELECT * FROM jobs WHERE id = ?', [jobId]);
+      const job = await queryOne(env, 
+        `SELECT j.*, jr.name as job_classification_name 
+         FROM jobs j 
+         LEFT JOIN job_roles jr ON j.job_classification = jr.id 
+         WHERE j.id = ?`, 
+        [jobId]);
 
       if (!job) {
         return addCorsHeaders(
@@ -289,6 +318,17 @@ export async function handleJobs(request, env, user) {
           job.preferred_skills = JSON.parse(job.preferred_skills);
         } catch (e) {
           job.preferred_skills = [];
+        }
+      }
+
+      // Auto-match candidates if job classification was updated
+      if (job_classification) {
+        try {
+          const { autoMatchByClassification } = await import('./matches.js');
+          await autoMatchByClassification(env, jobId);
+        } catch (e) {
+          console.error('Error auto-matching candidates:', e);
+          // Don't fail the job update if matching fails
         }
       }
 

@@ -36,7 +36,7 @@ const Candidates = () => {
     { value: 'city', label: 'City', type: 'text' },
     { value: 'state', label: 'State', type: 'text' },
     { value: 'country', label: 'Country', type: 'text' },
-    { value: 'current_job_title', label: 'Job Title', type: 'text' },
+    { value: 'current_job_title', label: 'Job Classification', type: 'text' },
     { value: 'secondary_job_title', label: 'Secondary Job Title', type: 'text' },
     { value: 'current_company', label: 'Company', type: 'text' },
     { value: 'years_of_experience', label: 'Years of Experience', type: 'number' },
@@ -1189,7 +1189,7 @@ const Candidates = () => {
                 <h3>Professional Information</h3>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Current Job Title</label>
+                    <label>Job Classification</label>
                     <select
                       value={candidateFormData.current_job_title}
                       onChange={(e) => setCandidateFormData({ ...candidateFormData, current_job_title: e.target.value })}
@@ -1600,7 +1600,7 @@ const Candidates = () => {
                 <h3>Professional Information</h3>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Current Job Title</label>
+                    <label>Job Classification</label>
                     <select
                       value={candidateFormData.current_job_title}
                       onChange={(e) => setCandidateFormData({ ...candidateFormData, current_job_title: e.target.value })}

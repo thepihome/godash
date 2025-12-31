@@ -250,13 +250,13 @@ const CandidateDetails = () => {
 
             <div className="form-row">
               <div className="form-group">
-                <label>Current Job Title</label>
+                <label>Job Classification</label>
                 <select
                   name="current_job_title"
                   value={profileData.current_job_title || ''}
                   onChange={handleInputChange}
                 >
-                  <option value="">Select a job role</option>
+                  <option value="">Select a job classification</option>
                   {jobRoles
                     .filter(role => role.is_active === 1 || role.is_active === true)
                         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))

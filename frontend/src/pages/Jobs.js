@@ -15,8 +15,18 @@ const Jobs = () => {
   const [employmentType, setEmploymentType] = useState('');
   const [showPostJobModal, setShowPostJobModal] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+
+  // Fetch job roles for classification dropdown
+  const { data: jobRoles = [] } = useQuery(
+    ['job-roles'],
+    () => api.get('/job-roles').then(res => res.data),
+    {
+      enabled: showPostJobModal
+    }
+  );
   const [jobFormData, setJobFormData] = useState({
     title: '',
+    job_classification: '',
     description: '',
     company: '',
     location: '',
@@ -126,6 +136,7 @@ const Jobs = () => {
     setEditingJob(job);
     setJobFormData({
       title: job.title || '',
+      job_classification: job.job_classification || '',
       description: job.description || '',
       company: job.company || '',
       location: job.location || '',
@@ -206,8 +217,8 @@ const Jobs = () => {
         <table className="table jobs-table">
           <thead>
             <tr>
-              <th>Job Title</th>
               <th>Company</th>
+              <th>Job Title</th>
               <th>Location</th>
               <th>Type</th>
               <th>Salary</th>
@@ -224,6 +235,9 @@ const Jobs = () => {
                   onClick={() => handleJobClick(job)}
                 >
                   <td>
+                    <strong>{job.company}</strong>
+                  </td>
+                  <td>
                     <div className="job-title-cell">
                       <strong>{job.title}</strong>
                       {job.required_skills && job.required_skills.length > 0 && (
@@ -238,7 +252,6 @@ const Jobs = () => {
                       )}
                     </div>
                   </td>
-                  <td>{job.company}</td>
                   <td>
                     {job.location ? (
                       <span className="job-location-inline">
@@ -333,6 +346,16 @@ const Jobs = () => {
                 <h3>Basic Information</h3>
                 <div className="form-row">
                   <div className="form-group">
+                    <label>Company *</label>
+                    <input
+                      type="text"
+                      value={jobFormData.company}
+                      onChange={(e) => setJobFormData({ ...jobFormData, company: e.target.value })}
+                      placeholder="Company name"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
                     <label>Job Title *</label>
                     <input
                       type="text"
@@ -342,15 +365,24 @@ const Jobs = () => {
                       required
                     />
                   </div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
-                    <label>Company *</label>
-                    <input
-                      type="text"
-                      value={jobFormData.company}
-                      onChange={(e) => setJobFormData({ ...jobFormData, company: e.target.value })}
-                      placeholder="Company name"
-                      required
-                    />
+                    <label>Job Classification</label>
+                    <select
+                      value={jobFormData.job_classification || ''}
+                      onChange={(e) => setJobFormData({ ...jobFormData, job_classification: e.target.value })}
+                    >
+                      <option value="">Select a job classification</option>
+                      {jobRoles
+                        .filter(role => role.is_active === 1 || role.is_active === true)
+                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                        .map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                    </select>
                   </div>
                 </div>
 

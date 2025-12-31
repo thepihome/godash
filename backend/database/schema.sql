@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS user_groups (
 CREATE TABLE IF NOT EXISTS jobs (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
+  job_classification INTEGER REFERENCES job_roles(id),
   description TEXT,
   company VARCHAR(255) NOT NULL,
   location VARCHAR(255),

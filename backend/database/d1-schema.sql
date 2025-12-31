@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS user_groups (
 CREATE TABLE IF NOT EXISTS jobs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
+  job_classification INTEGER REFERENCES job_roles(id),
   description TEXT,
   company TEXT NOT NULL,
   location TEXT,
