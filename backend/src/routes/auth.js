@@ -56,8 +56,8 @@ export async function handleAuth(request, env) {
     console.log('Registration request received');
     try {
       const body = await request.json();
-      console.log('Registration body:', { email: body.email, first_name: body.first_name, last_name: body.last_name, role: body.role });
-      const { email, password, first_name, last_name, role, phone } = body;
+      console.log('Registration body:', { email: body.email, first_name: body.first_name, last_name: body.last_name });
+      const { email, password, first_name, last_name, phone } = body;
 
       // Check if user exists
       const existingUser = await queryOne(
@@ -80,8 +80,8 @@ export async function handleAuth(request, env) {
       // Hash password
       const password_hash = await hashPassword(password);
 
-      // Insert user
-      console.log('Attempting to insert user:', { email, first_name, last_name, role: role || 'candidate' });
+      // Insert user - always set role to 'candidate' for registrations (ignore any role sent from frontend)
+      console.log('Attempting to insert user:', { email, first_name, last_name, role: 'candidate' });
       
       let result;
       try {
@@ -89,7 +89,7 @@ export async function handleAuth(request, env) {
           env,
           `INSERT INTO users (email, password_hash, first_name, last_name, role, phone)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [email, password_hash, first_name, last_name, role || 'candidate', phone || null]
+          [email, password_hash, first_name, last_name, 'candidate', phone || null]
         );
         console.log('Insert result:', JSON.stringify(result));
       } catch (dbError) {
