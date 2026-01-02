@@ -556,6 +556,27 @@ export async function handleCandidates(request, env, user) {
         [candidateId]
       );
 
+      // Get consultant assignment if exists
+      let consultant = null;
+      const assignment = await queryOne(
+        env,
+        `SELECT ca.*, u.id, u.first_name, u.last_name, u.email, u.role
+         FROM consultant_assignments ca
+         INNER JOIN users u ON ca.consultant_id = u.id
+         WHERE ca.candidate_id = ? AND ca.status = 'active'
+         LIMIT 1`,
+        [candidateId]
+      );
+      if (assignment) {
+        consultant = {
+          id: assignment.id,
+          first_name: assignment.first_name,
+          last_name: assignment.last_name,
+          email: assignment.email,
+          role: assignment.role
+        };
+      }
+
       return addCorsHeaders(
         new Response(
           JSON.stringify({
@@ -564,6 +585,7 @@ export async function handleCandidates(request, env, user) {
             matches: matches || [],
             crm_interactions: crmInteractions || [],
             profile: profile || null,
+            consultant: consultant,
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         ),

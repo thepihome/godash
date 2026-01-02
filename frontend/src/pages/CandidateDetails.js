@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiEdit, FiSave, FiX, FiClock, FiSearch, FiFilter, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiEdit, FiSave, FiX, FiClock, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiUserPlus, FiUserMinus } from 'react-icons/fi';
 import './CandidateDetails.css';
 
 const CandidateDetails = () => {
@@ -44,6 +44,50 @@ const CandidateDetails = () => {
       enabled: isEditing
     }
   );
+
+  // Fetch consultants for assignment (admin only)
+  const { data: consultants = [] } = useQuery(
+    ['consultants'],
+    () => api.get('/users').then(res => res.data.filter(u => u.role === 'consultant' || u.role === 'admin')),
+    {
+      enabled: user?.role === 'admin'
+    }
+  );
+
+  // Assignment state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedConsultant, setSelectedConsultant] = useState('');
+
+  // Assign candidate mutation
+  const assignMutation = useMutation(
+    ({ consultantId }) => api.post(`/candidates/${id}/assign`, { consultant_id: consultantId }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['candidate', id]);
+        setShowAssignModal(false);
+        setSelectedConsultant('');
+      },
+    }
+  );
+
+  // Unassign candidate mutation
+  const unassignMutation = useMutation(
+    ({ consultantId }) => api.delete(`/candidates/${id}/assign/${consultantId}`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['candidate', id]);
+      },
+    }
+  );
+
+  const handleAssignSubmit = (e) => {
+    e.preventDefault();
+    if (selectedConsultant) {
+      assignMutation.mutate({
+        consultantId: parseInt(selectedConsultant)
+      });
+    }
+  };
 
   // Build activity logs query params
   const activityLogsParams = useMemo(() => {
@@ -159,6 +203,39 @@ const CandidateDetails = () => {
       <div className="candidate-info">
         <p><strong>Email:</strong> {candidate.email}</p>
         {candidate.phone && <p><strong>Phone:</strong> {candidate.phone}</p>}
+        {user?.role === 'admin' && (
+          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '5px' }}>
+            <p><strong>Consultant Assignment:</strong></p>
+            {candidate.consultant ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
+                <span>
+                  {candidate.consultant.first_name} {candidate.consultant.last_name} ({candidate.consultant.email})
+                </span>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => {
+                    if (window.confirm(`Unassign ${candidate.consultant.first_name} ${candidate.consultant.last_name} from this candidate?`)) {
+                      unassignMutation.mutate({ consultantId: candidate.consultant.id });
+                    }
+                  }}
+                  disabled={unassignMutation.isLoading}
+                >
+                  <FiUserMinus /> Unassign
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
+                <span style={{ color: '#666' }}>Not assigned</span>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowAssignModal(true)}
+                >
+                  <FiUserPlus /> Assign Consultant
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="candidate-section">
@@ -727,6 +804,57 @@ const CandidateDetails = () => {
           ) : (
             <p>No activity history available{hasActiveFilters && ' (try adjusting your filters)'}</p>
           )}
+        </div>
+      )}
+
+      {/* Assign Consultant Modal */}
+      {showAssignModal && user?.role === 'admin' && (
+        <div className="modal-overlay" onClick={() => {
+          setShowAssignModal(false);
+          setSelectedConsultant('');
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Assign Candidate to Consultant</h2>
+            <p>
+              Assign <strong>{candidate.first_name} {candidate.last_name}</strong> to a consultant
+            </p>
+            <form onSubmit={handleAssignSubmit}>
+              <div className="form-group">
+                <label>Select Consultant</label>
+                <select
+                  value={selectedConsultant}
+                  onChange={(e) => setSelectedConsultant(e.target.value)}
+                  required
+                >
+                  <option value="">Choose a consultant...</option>
+                  {consultants.map((consultant) => (
+                    <option key={consultant.id} value={consultant.id}>
+                      {consultant.first_name} {consultant.last_name} ({consultant.email}) - {consultant.role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowAssignModal(false);
+                    setSelectedConsultant('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={assignMutation.isLoading || !selectedConsultant}
+                >
+                  {assignMutation.isLoading ? 'Assigning...' : 'Assign'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

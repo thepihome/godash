@@ -197,6 +197,59 @@ const Candidates = () => {
     }
   );
 
+  // Fetch consultants for assignment (admin only)
+  const { data: consultants = [] } = useQuery(
+    ['consultants'],
+    () => api.get('/users').then(res => res.data.filter(u => u.role === 'consultant' || u.role === 'admin')),
+    {
+      enabled: user?.role === 'admin'
+    }
+  );
+
+  // Assignment state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assigningCandidate, setAssigningCandidate] = useState(null);
+  const [selectedConsultant, setSelectedConsultant] = useState('');
+
+  // Assign candidate mutation
+  const assignMutation = useMutation(
+    ({ candidateId, consultantId }) => api.post(`/candidates/${candidateId}/assign`, { consultant_id: consultantId }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['candidates', user?.role]);
+        setShowAssignModal(false);
+        setAssigningCandidate(null);
+        setSelectedConsultant('');
+      },
+    }
+  );
+
+  // Unassign candidate mutation
+  const unassignMutation = useMutation(
+    ({ candidateId, consultantId }) => api.delete(`/candidates/${candidateId}/assign/${consultantId}`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['candidates', user?.role]);
+      },
+    }
+  );
+
+  const handleAssignClick = (candidate) => {
+    setAssigningCandidate(candidate);
+    setShowAssignModal(true);
+    setSelectedConsultant('');
+  };
+
+  const handleAssignSubmit = (e) => {
+    e.preventDefault();
+    if (assigningCandidate && selectedConsultant) {
+      assignMutation.mutate({
+        candidateId: assigningCandidate.id,
+        consultantId: parseInt(selectedConsultant)
+      });
+    }
+  };
+
   // Debounce URL updates to prevent page refresh on every keystroke
   const isInitialMount = useRef(true);
   const urlUpdateTimeout = useRef(null);
@@ -977,6 +1030,9 @@ const Candidates = () => {
                   sortDirection === 'asc' ? <FiArrowUp style={{ marginLeft: '5px', display: 'inline' }} /> : <FiArrowDown style={{ marginLeft: '5px', display: 'inline' }} />
                 )}
               </th>
+              {user?.role === 'admin' && (
+                <th>Actions</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -1058,11 +1114,22 @@ const Candidates = () => {
                       )}
                     </div>
                   </td>
+                  {user?.role === 'admin' && (
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleAssignClick(candidate)}
+                        title="Assign to consultant"
+                      >
+                        Assign
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="empty-state">
+                <td colSpan={user?.role === 'admin' ? 9 : 8} className="empty-state">
                   {user?.role === 'admin' ? 'No candidates found' : 'No candidates assigned'}
                 </td>
               </tr>
