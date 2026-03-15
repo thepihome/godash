@@ -195,6 +195,128 @@ export async function handleAuth(request, env) {
     }
   }
 
+  // Google Sign-In (only for users already in users table)
+  if (path === '/api/auth/google' && method === 'POST') {
+    try {
+      const body = await request.json();
+      const { credential } = body;
+      if (!credential) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Missing credential' }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      const clientId = env.GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        console.error('GOOGLE_CLIENT_ID not configured');
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Server configuration error' }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      const tokenRes = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+      );
+      if (!tokenRes.ok) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Invalid Google credential' }),
+            { status: 401, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      const payload = await tokenRes.json();
+      if (payload.aud !== clientId) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Invalid Google credential' }),
+            { status: 401, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      const email = payload.email;
+      if (!email) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Email not provided by Google' }),
+            { status: 401, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      const user = await queryOne(
+        env,
+        'SELECT id, email, first_name, last_name, role, is_active FROM users WHERE email = ?',
+        [email]
+      );
+      if (!user) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Access denied. Your account is not authorized to use this app.' }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      if (!user.is_active) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Account is deactivated' }),
+            { status: 401, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+      const token = createJWT(
+        { userId: user.id },
+        env.JWT_SECRET,
+        env.JWT_EXPIRE || '7d'
+      );
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({
+            token,
+            user: {
+              id: user.id,
+              email: user.email,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              role: user.role,
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    } catch (error) {
+      console.error('Google auth error:', error);
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: 'Server error' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+  }
+
   // Login
   if (path === '/api/auth/login' && method === 'POST') {
     try {

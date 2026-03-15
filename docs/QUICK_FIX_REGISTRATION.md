@@ -60,7 +60,7 @@ The registration is probably failing because the `users` table doesn't exist in 
 **Fix:**
 ```bash
 cd backend
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 This creates all tables in your **production** database.
@@ -69,12 +69,12 @@ This creates all tables in your **production** database.
 
 ```bash
 # Check if users table exists
-wrangler d1 execute job-hunting-db --command="SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+wrangler d1 execute godashprodcore01 --command="SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
 
 # Should return: users
 
 # If empty, run migration:
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 ## What to Look For
@@ -110,7 +110,7 @@ In the browser Network tab, check the registration request:
 
 2. **Run database migration** (if tables don't exist):
    ```bash
-   wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+   wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
    ```
 
 3. **Check logs** while registering:

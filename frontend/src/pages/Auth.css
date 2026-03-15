@@ -17,9 +17,33 @@
 }
 
 .auth-card h2 {
-  margin-bottom: 30px;
+  margin-bottom: 8px;
   text-align: center;
   color: #333;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+
+.google-signin-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.google-button-container {
+  min-height: 44px;
+}
+
+.auth-loading {
+  text-align: center;
+  color: #666;
+  margin-top: 12px;
+  font-size: 0.9rem;
 }
 
 .auth-link {

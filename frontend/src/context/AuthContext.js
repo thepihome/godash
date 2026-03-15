@@ -40,31 +40,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
+  const loginWithGoogle = async (credential) => {
+    const response = await api.post('/auth/google', { credential });
     const { token, user } = response.data;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
     return user;
-  };
-
-  const register = async (userData) => {
-    try {
-      const response = await api.post('/auth/register', userData);
-      if (!response.data || !response.data.token) {
-        throw new Error('Registration failed: No token received');
-      }
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
-      return user;
-    } catch (error) {
-      console.error('Registration error:', error);
-      console.error('Response:', error.response?.data);
-      throw error;
-    }
   };
 
   const logout = () => {
@@ -86,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, refreshUser }}>
+    <AuthContext.Provider value={{ user, loginWithGoogle, logout, loading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

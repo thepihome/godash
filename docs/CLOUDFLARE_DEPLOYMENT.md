@@ -18,25 +18,25 @@ This guide covers deploying both frontend and backend to Cloudflare.
 1. **Create D1 database**:
    ```bash
    cd backend
-   wrangler d1 create job-hunting-db
+   wrangler d1 create godashprodcore01
    ```
 
 2. **Note the database ID** from the output and update `wrangler.toml`:
    ```toml
    [[d1_databases]]
    binding = "DB"
-   database_name = "job-hunting-db"
+   database_name = "godashprodcore01"
    database_id = "your-database-id-here"
    ```
 
 3. **Run the schema migration**:
    ```bash
-   wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+   wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
    ```
 
    For local development:
    ```bash
-   wrangler d1 execute job-hunting-db --local --file=./database/d1-schema.sql
+   wrangler d1 execute godashprodcore01 --local --file=./database/d1-schema.sql
    ```
 
 ## Step 2: Set Up R2 Bucket for File Storage
@@ -173,7 +173,7 @@ backend/
 
 2. **Run migrations locally**:
    ```bash
-   wrangler d1 execute job-hunting-db --local --file=./database/d1-schema.sql
+   wrangler d1 execute godashprodcore01 --local --file=./database/d1-schema.sql
    ```
 
 3. **Test locally**: Workers will run on `http://localhost:8787`
@@ -230,7 +230,7 @@ The following routes are stubs and need full implementation:
 ### Database Connection Issues
 - Verify `database_id` in `wrangler.toml` matches your D1 database
 - Check that migrations ran successfully
-- Use `wrangler d1 execute job-hunting-db --command="SELECT * FROM users LIMIT 1"` to test
+- Use `wrangler d1 execute godashprodcore01 --command="SELECT * FROM users LIMIT 1"` to test
 
 ### R2 Upload Issues
 - Verify R2 bucket name matches in `wrangler.toml`

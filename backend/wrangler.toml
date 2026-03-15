@@ -3,12 +3,12 @@ main = "worker.js"
 compatibility_date = "2024-01-01"
 
 # D1 Database binding
-# To create the database, run: wrangler d1 create job-hunting-db
+# To create the database, run: wrangler d1 create godashprodcore01
 # Then copy the database_id from the output and paste it below
 # OR create it via Cloudflare Dashboard: https://dash.cloudflare.com → Workers & Pages → D1
 [[d1_databases]]
 binding = "DB"
-database_name = "job-hunting-db"
+database_name = "godashprodcore01"
 database_id = "9e2032c6-2083-4e41-82ee-dbb9c8a9528a"
 
 # R2 Bucket binding for file uploads
@@ -20,6 +20,8 @@ bucket_name = "resume-uploads"
 # JWT_SECRET - set via: wrangler secret put JWT_SECRET
 # JWT_EXPIRE - set via: wrangler secret put JWT_EXPIRE
 # FRONTEND_URL - set via: wrangler secret put FRONTEND_URL
+# GOOGLE_CLIENT_ID - your Google OAuth 2.0 Web client ID (for Google Sign-In)
+# Set via: wrangler secret put GOOGLE_CLIENT_ID
 
 [env.production]
 # Production-specific settings can go here

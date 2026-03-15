@@ -8,16 +8,16 @@ Run this command in your terminal (from the `backend` directory):
 
 ```bash
 cd backend
-wrangler d1 create job-hunting-db
+wrangler d1 create godashprodcore01
 ```
 
 This will output something like:
 ```
-✅ Successfully created DB 'job-hunting-db'!
+✅ Successfully created DB 'godashprodcore01'!
 
 [[d1_databases]]
 binding = "DB"
-database_name = "job-hunting-db"
+database_name = "godashprodcore01"
 database_id = "abc123def456ghi789"  # <-- Copy this ID
 ```
 
@@ -28,7 +28,7 @@ Copy the `database_id` from the output above and paste it into `wrangler.toml`:
 ```toml
 [[d1_databases]]
 binding = "DB"
-database_name = "job-hunting-db"
+database_name = "godashprodcore01"
 database_id = "your-database-id-here"  # <-- Paste the ID here
 ```
 
@@ -38,10 +38,10 @@ After updating the database_id, run the migration:
 
 ```bash
 # For local development
-wrangler d1 execute job-hunting-db --local --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --local --file=./database/d1-schema.sql
 
 # For production (after deploying)
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 ## Step 4: Verify the Database
@@ -53,15 +53,15 @@ Test that the database is working:
 wrangler d1 list
 
 # Test a query (local)
-wrangler d1 execute job-hunting-db --local --command="SELECT name FROM sqlite_master WHERE type='table'"
+wrangler d1 execute godashprodcore01 --local --command="SELECT name FROM sqlite_master WHERE type='table'"
 
 # Test a query (production)
-wrangler d1 execute job-hunting-db --command="SELECT name FROM sqlite_master WHERE type='table'"
+wrangler d1 execute godashprodcore01 --command="SELECT name FROM sqlite_master WHERE type='table'"
 ```
 
 ## Troubleshooting
 
-### Error: "Couldn't find a D1 DB with the name or binding 'job-hunting-db'"
+### Error: "Couldn't find a D1 DB with the name or binding 'godashprodcore01'"
 
 This means:
 1. The database hasn't been created yet (run Step 1)
@@ -83,7 +83,7 @@ Make sure the `database_name` in `wrangler.toml` matches exactly what you create
 1. Go to https://dash.cloudflare.com
 2. Navigate to **Workers & Pages** → **D1**
 3. Click **Create database**
-4. Name it: `job-hunting-db`
+4. Name it: `godashprodcore01`
 5. Copy the Database ID
 6. Update `wrangler.toml` with the ID
 7. Run the migration using the dashboard or CLI

@@ -52,7 +52,7 @@ This will show:
 **If tables list is empty or doesn't include `users`**, run:
 ```bash
 cd backend
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 ## Step 4: Check Worker Logs

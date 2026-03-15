@@ -7,9 +7,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:create": "wrangler d1 create job-hunting-db",
-    "db:migrate": "wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql",
-    "db:local": "wrangler d1 execute job-hunting-db --local --file=./database/d1-schema.sql"
+    "db:create": "wrangler d1 create godashprodcore01",
+    "db:migrate": "wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql",
+    "db:local": "wrangler d1 execute godashprodcore01 --local --file=./database/d1-schema.sql"
   },
   "dependencies": {},
   "devDependencies": {

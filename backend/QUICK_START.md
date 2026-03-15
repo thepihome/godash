@@ -18,7 +18,7 @@
 
 ```bash
 cd backend
-wrangler d1 create job-hunting-db
+wrangler d1 create godashprodcore01
 ```
 
 **Copy the `database_id` from the output!** It will look like:
@@ -33,7 +33,7 @@ Open `backend/wrangler.toml` and paste the `database_id` you copied:
 ```toml
 [[d1_databases]]
 binding = "DB"
-database_name = "job-hunting-db"
+database_name = "godashprodcore01"
 database_id = "paste-your-id-here"  # ← Paste here
 ```
 
@@ -41,10 +41,10 @@ database_id = "paste-your-id-here"  # ← Paste here
 
 ```bash
 # For local development
-wrangler d1 execute job-hunting-db --local --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --local --file=./database/d1-schema.sql
 
 # For production (after you deploy)
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 ### 4. Create R2 Bucket (Optional - for file uploads)
@@ -97,10 +97,10 @@ After deployment, note your Workers URL (e.g., `https://gobunnyy-backend.your-su
 
 ## Common Issues
 
-### "Couldn't find a D1 DB with the name or binding 'job-hunting-db'"
+### "Couldn't find a D1 DB with the name or binding 'godashprodcore01'"
 
 **Solution**: Make sure you:
-1. Created the database: `wrangler d1 create job-hunting-db`
+1. Created the database: `wrangler d1 create godashprodcore01`
 2. Updated `wrangler.toml` with the `database_id`
 3. The `database_name` matches exactly
 

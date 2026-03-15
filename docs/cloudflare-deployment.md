@@ -113,7 +113,7 @@ This requires migrating your backend to Cloudflare Workers and using D1 (SQLite)
    npm install -g wrangler
    
    # Create D1 database
-   wrangler d1 create job-hunting-db
+   wrangler d1 create godashprodcore01
    ```
 
 2. **Migrate schema** from PostgreSQL to SQLite (D1)

@@ -27,7 +27,7 @@
 
 ```bash
 cd backend
-wrangler d1 execute job-hunting-db --command="SELECT name FROM sqlite_master WHERE type='table'"
+wrangler d1 execute godashprodcore01 --command="SELECT name FROM sqlite_master WHERE type='table'"
 ```
 
 Should return a list of tables including `users`.
@@ -35,7 +35,7 @@ Should return a list of tables including `users`.
 #### 2. Check if Users Table Exists
 
 ```bash
-wrangler d1 execute job-hunting-db --command="SELECT COUNT(*) as count FROM users"
+wrangler d1 execute godashprodcore01 --command="SELECT COUNT(*) as count FROM users"
 ```
 
 #### 3. Check Worker Logs
@@ -49,7 +49,7 @@ Then try registering a user and watch for errors.
 #### 4. Test Database Insert Manually
 
 ```bash
-wrangler d1 execute job-hunting-db --command="INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ('test@example.com', 'hash', 'Test', 'User', 'candidate')"
+wrangler d1 execute godashprodcore01 --command="INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ('test@example.com', 'hash', 'Test', 'User', 'candidate')"
 ```
 
 #### 5. Check Environment Variables
@@ -71,7 +71,7 @@ Check that `database_id` matches your actual D1 database ID.
 
 1. **Run Database Migration**
    ```bash
-   wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+   wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
    ```
 
 2. **Check Database Binding**

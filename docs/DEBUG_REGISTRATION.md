@@ -13,14 +13,14 @@ Run this command to verify tables exist in production:
 
 ```bash
 cd backend
-wrangler d1 execute job-hunting-db --command="SELECT name FROM sqlite_master WHERE type='table'"
+wrangler d1 execute godashprodcore01 --command="SELECT name FROM sqlite_master WHERE type='table'"
 ```
 
 **Expected output**: Should list tables including `users`, `jobs`, `resumes`, etc.
 
 **If tables don't exist**: Run migration:
 ```bash
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 ### 2. Check Worker Logs
@@ -56,10 +56,10 @@ Try inserting a user directly:
 
 ```bash
 cd backend
-wrangler d1 execute job-hunting-db --command="INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ('test@example.com', 'testhash123', 'Test', 'User', 'candidate')"
+wrangler d1 execute godashprodcore01 --command="INSERT INTO users (email, password_hash, first_name, last_name, role) VALUES ('test@example.com', 'testhash123', 'Test', 'User', 'candidate')"
 
 # Check if it was created
-wrangler d1 execute job-hunting-db --command="SELECT * FROM users WHERE email='test@example.com'"
+wrangler d1 execute godashprodcore01 --command="SELECT * FROM users WHERE email='test@example.com'"
 ```
 
 ### 5. Check Browser Network Tab
@@ -92,7 +92,7 @@ Should show:
 #### Issue: Tables Don't Exist
 **Fix**: Run migration on production database
 ```bash
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 #### Issue: Database Binding Wrong
@@ -133,5 +133,5 @@ Once you identify the issue:
 1. Fix the root cause (likely missing tables)
 2. Deploy updated backend: `wrangler deploy`
 3. Test registration again
-4. Verify user in database: `wrangler d1 execute job-hunting-db --command="SELECT * FROM users"`
+4. Verify user in database: `wrangler d1 execute godashprodcore01 --command="SELECT * FROM users"`
 

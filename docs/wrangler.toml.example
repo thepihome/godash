@@ -11,7 +11,7 @@ vars = { NODE_ENV = "production" }
 # D1 Database binding (if using D1)
 # [[env.production.d1_databases]]
 # binding = "DB"
-# database_name = "job-hunting-db"
+# database_name = "godashprodcore01"
 # database_id = "your-database-id"
 
 # R2 Bucket binding (for file uploads)

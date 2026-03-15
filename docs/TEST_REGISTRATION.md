@@ -64,7 +64,7 @@ curl -X POST https://gobunnyy-backend.picloud.workers.dev/api/auth/register \
 
 ### Issue: Registration returns 500
 - Database tables don't exist
-- Run: `wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql`
+- Run: `wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql`
 
 ### Issue: Registration returns 404
 - Route not found

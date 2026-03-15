@@ -24,10 +24,10 @@ After fixing the import error, registration might still fail if database tables 
 
 ```bash
 # Check if tables exist
-wrangler d1 execute job-hunting-db --command="SELECT name FROM sqlite_master WHERE type='table'"
+wrangler d1 execute godashprodcore01 --command="SELECT name FROM sqlite_master WHERE type='table'"
 
 # If no tables, run migration
-wrangler d1 execute job-hunting-db --file=./database/d1-schema.sql
+wrangler d1 execute godashprodcore01 --file=./database/d1-schema.sql
 ```
 
 ## What Was Fixed
