@@ -24,6 +24,8 @@ const Layout = ({ children }) => {
     { path: '/timesheets', label: 'Timesheets', icon: FiClock, roles: ['consultant', 'admin'], permission: 'tab_timesheets' },
     { path: '/crm', label: 'CRM', icon: FiDatabase, roles: ['consultant', 'admin'], permission: 'tab_crm' },
     { path: '/metadata', label: 'Metadata', icon: FiLayers, roles: ['admin'], permission: 'tab_metadata' },
+    // Register tab: admin-only in UI; permission 'tab_register' controls visibility via settings/groups in future
+    { path: '/register', label: 'Register', icon: FiUsers, roles: ['admin'], permission: 'tab_register' },
     { path: '/settings', label: 'Settings', icon: FiSettings, roles: ['candidate', 'consultant', 'admin'], permission: 'tab_settings' },
   ];
 

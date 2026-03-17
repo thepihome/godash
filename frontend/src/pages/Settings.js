@@ -1316,7 +1316,7 @@ const PermissionsManagement = () => {
         if (!perms[perm.id]) {
           // Check if role has this permission
           const hasRolePerm = userPermsData.role === 'admin' || 
-            (userPermsData.role === 'consultant' && ['tab_dashboard', 'tab_jobs', 'tab_matches', 'tab_candidates', 'tab_timesheets', 'tab_crm', 'tab_settings', 'job_view', 'job_create', 'job_edit', 'job_delete', 'candidate_view', 'candidate_edit', 'timesheet_view', 'timesheet_create', 'kpi_manage'].includes(perm.name)) ||
+            (userPermsData.role === 'consultant' && ['tab_dashboard', 'tab_jobs', 'tab_matches', 'tab_candidates', 'tab_timesheets', 'tab_crm', 'tab_settings', 'tab_register', 'job_view', 'job_create', 'job_edit', 'job_delete', 'candidate_view', 'candidate_edit', 'timesheet_view', 'timesheet_create', 'kpi_manage'].includes(perm.name)) ||
             (userPermsData.role === 'candidate' && ['tab_dashboard', 'tab_jobs', 'tab_resumes', 'tab_matches', 'tab_settings', 'job_view', 'kpi_manage'].includes(perm.name));
           perms[perm.id] = { ...perm, effective: hasRolePerm, source: 'role' };
         }

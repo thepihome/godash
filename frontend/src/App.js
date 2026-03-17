@@ -9,6 +9,7 @@ import JobDetails from './pages/JobDetails';
 import Resumes from './pages/Resumes';
 import Matches from './pages/Matches';
 import Candidates from './pages/Candidates';
+import RegisterCandidates from './pages/RegisterCandidates';
 import CandidateDetails from './pages/CandidateDetails';
 import Timesheets from './pages/Timesheets';
 import CRM from './pages/CRM';
@@ -38,6 +39,7 @@ function App() {
                       <Route path="/matches" element={<Matches />} />
                       <Route path="/candidates" element={<Candidates />} />
                       <Route path="/candidates/:id" element={<CandidateDetails />} />
+                      <Route path="/register" element={<RegisterCandidates />} />
                           <Route path="/timesheets" element={<Timesheets />} />
                           <Route path="/crm" element={<CRM />} />
                           <Route path="/metadata" element={<Metadata />} />
