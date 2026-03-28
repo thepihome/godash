@@ -20,7 +20,7 @@ const AiMatchingSettings = () => {
 
   const { data, isLoading } = useQuery(
     ['settings-ai-matching'],
-    () => api.get('/settings/ai-matching').then((r) => r.data),
+    () => api.get('/permissions/ai-matching').then((r) => r.data),
     { refetchOnWindowFocus: false }
   );
 
@@ -37,7 +37,7 @@ const AiMatchingSettings = () => {
   }, [data]);
 
   const saveMutation = useMutation(
-    (body) => api.put('/settings/ai-matching', body),
+    (body) => api.put('/permissions/ai-matching', body),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['settings-ai-matching']);

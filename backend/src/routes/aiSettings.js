@@ -1,5 +1,6 @@
 /**
  * Admin-only AI matching configuration (stored in app_settings).
+ * Exposed at /api/permissions/ai-matching (primary) and /api/settings/ai-matching (alias).
  */
 
 import { addCorsHeaders } from '../utils/cors.js';
@@ -10,9 +11,8 @@ import {
   toPublicAiConfig,
 } from '../utils/appSettingsDb.js';
 
-export async function handleAiSettings(request, env, user) {
-  const url = new URL(request.url);
-  const path = url.pathname;
+/** GET/PUT AI config — admin only. */
+export async function handleAiMatchingAdmin(request, env, user) {
   const method = request.method;
 
   const authError = authorize('admin')(user);
@@ -27,7 +27,7 @@ export async function handleAiSettings(request, env, user) {
     );
   }
 
-  if (path === '/api/settings/ai-matching' && method === 'GET') {
+  if (method === 'GET') {
     const config = await getAiMatchingConfig(env);
     return addCorsHeaders(
       new Response(JSON.stringify(toPublicAiConfig(config)), {
@@ -39,7 +39,7 @@ export async function handleAiSettings(request, env, user) {
     );
   }
 
-  if (path === '/api/settings/ai-matching' && method === 'PUT') {
+  if (method === 'PUT') {
     try {
       const body = await request.json();
       const current = await getAiMatchingConfig(env);
@@ -90,11 +90,26 @@ export async function handleAiSettings(request, env, user) {
   }
 
   return addCorsHeaders(
-    new Response(JSON.stringify({ error: 'Not found' }), {
-      status: 404,
+    new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
       headers: { 'Content-Type': 'application/json' },
     }),
     env,
     request
   );
+}
+
+export async function handleAiSettings(request, env, user) {
+  const path = (new URL(request.url).pathname || '/').replace(/\/+$/, '') || '/';
+  if (path !== '/api/settings/ai-matching') {
+    return addCorsHeaders(
+      new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      env,
+      request
+    );
+  }
+  return handleAiMatchingAdmin(request, env, user);
 }

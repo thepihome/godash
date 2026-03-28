@@ -5,10 +5,12 @@
 import { query, queryOne } from '../utils/db.js';
 import { addCorsHeaders } from '../utils/cors.js';
 import { authorize } from '../middleware/auth.js';
+import { handleAiMatchingAdmin } from './aiSettings.js';
 
 export async function handlePermissions(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname;
+  const pathNorm = (path || '/').replace(/\/+$/, '') || '/';
   const method = request.method;
 
   // All permission endpoints require admin role
@@ -22,6 +24,11 @@ export async function handlePermissions(request, env, user) {
       env,
       request
     );
+  }
+
+  // AI matching config (same auth as permissions — avoids /api/settings/* routing issues on some hosts)
+  if (pathNorm === '/api/permissions/ai-matching') {
+    return handleAiMatchingAdmin(request, env, user);
   }
 
   // Get all permissions
