@@ -224,6 +224,7 @@ INSERT INTO permissions (name, description, resource_type, action) VALUES
   ('tab_timesheets', 'Access Timesheets tab', 'tab', 'view'),
   ('tab_crm', 'Access CRM tab', 'tab', 'view'),
   ('tab_settings', 'Access Settings tab', 'tab', 'view'),
+  ('tab_register', 'Access Register tab', 'tab', 'view'),
   -- Job permissions
   ('job_view', 'View job listings', 'job', 'view'),
   ('job_create', 'Create new job postings', 'job', 'create'),

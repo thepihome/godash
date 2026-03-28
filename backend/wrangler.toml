@@ -2,14 +2,18 @@ name = "gobunnyy-backend"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
-# D1 Database binding
-# To create the database, run: wrangler d1 create godashprodcore01
-# Then copy the database_id from the output and paste it below
-# OR create it via Cloudflare Dashboard: https://dash.cloudflare.com → Workers & Pages → D1
+# D1 Database bindings
+# Primary app database
 [[d1_databases]]
 binding = "DB"
 database_name = "godashprodcore01"
-database_id = "9e2032c6-2083-4e41-82ee-dbb9c8a9528a"
+database_id = "c1a7e500-7dfb-4113-9234-eccdee6b55bc"
+
+# External registrations database
+[[d1_databases]]
+binding = "REGISTER_DB"
+database_name = "gowebprodcore"
+database_id = "32a0b7d7-0725-4afd-9dcb-a7a7b2aa5f8d"
 
 # R2 Bucket binding for file uploads
 [[r2_buckets]]

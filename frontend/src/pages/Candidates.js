@@ -3,9 +3,62 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiSave, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiSave, FiArrowUp, FiArrowDown, FiUsers, FiEdit3 } from 'react-icons/fi';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import './Candidates.css';
+
+/** Map register_candidates row → candidate form defaults (fname/lname/email/phone/position/start_date/price/ref). */
+function mapRegisterRowToCandidateForm(row) {
+  if (!row) return null;
+  const fname = row.fname ?? row.first_name ?? '';
+  const lname = row.lname ?? row.last_name ?? '';
+  const email = row.email ?? '';
+  const phone = row.phone ?? '';
+  const position = row.position ?? row.current_job_title ?? '';
+  const start = row.start_date ?? '';
+  const price = row.price;
+  const ref = row.ref ?? '';
+  const noteLines = [];
+  if (start) noteLines.push(`Register start date: ${start}`);
+  if (price !== undefined && price !== null && price !== '') noteLines.push(`Register rate/price: ${price}`);
+  if (ref) noteLines.push(`Register ref: ${ref}`);
+  const additional_notes = noteLines.join('\n');
+  let expected_salary_min = '';
+  let expected_salary_max = '';
+  const p = typeof price === 'number' ? price : parseFloat(String(price).replace(/[^0-9.-]/g, ''));
+  if (!Number.isNaN(p) && String(price).trim() !== '') {
+    expected_salary_min = String(Math.floor(p));
+    expected_salary_max = String(Math.ceil(p));
+  }
+  return {
+    email: String(email).trim(),
+    password: '',
+    first_name: String(fname).trim(),
+    last_name: String(lname).trim(),
+    phone: String(phone).trim(),
+    date_of_birth: '',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    zip_code: '',
+    linkedin_url: '',
+    portfolio_url: '',
+    github_url: '',
+    job_classification: '',
+    current_job_title: String(position).trim(),
+    current_company: '',
+    years_of_experience: '',
+    availability: 'available',
+    expected_salary_min,
+    expected_salary_max,
+    work_authorization: '',
+    willing_to_relocate: false,
+    preferred_locations: '',
+    summary: '',
+    additional_notes,
+  };
+}
 
 const Candidates = () => {
   const { user } = useAuth();
@@ -13,6 +66,12 @@ const Candidates = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddMethodModal, setShowAddMethodModal] = useState(false);
+  const [showRegisterSelectModal, setShowRegisterSelectModal] = useState(false);
+  const [addCandidateSource, setAddCandidateSource] = useState(null); // 'manual' | 'register' | null
+  const [selectedRegisterRow, setSelectedRegisterRow] = useState(null);
+  const [registerPickerSearch, setRegisterPickerSearch] = useState('');
+  const [registerPickerSelectedId, setRegisterPickerSelectedId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState(null);
   // Removed showFilters state - filters are now always visible in compact form
@@ -197,6 +256,26 @@ const Candidates = () => {
       enabled: showAddModal || showEditModal
     }
   );
+
+  const { data: registerRows = [], isLoading: registerRowsLoading, isError: registerRowsError } = useQuery(
+    ['register-candidates', 'picker'],
+    () => api.get('/register-candidates').then((res) => res.data),
+    {
+      enabled: user?.role === 'admin' && showRegisterSelectModal,
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  const filteredRegisterRows = useMemo(() => {
+    const q = registerPickerSearch.trim().toLowerCase();
+    if (!q) return registerRows;
+    return registerRows.filter((r) => {
+      const parts = [r.fname, r.lname, r.first_name, r.last_name, r.email, r.phone, r.position, r.ref]
+        .filter(Boolean)
+        .map((v) => String(v));
+      return parts.some((p) => p.toLowerCase().includes(q));
+    });
+  }, [registerRows, registerPickerSearch]);
 
   // Update candidate status mutation (admin only)
   const updateStatusMutation = useMutation(
@@ -609,6 +688,8 @@ const Candidates = () => {
       onSuccess: () => {
         queryClient.invalidateQueries('candidates');
         setShowAddModal(false);
+        setAddCandidateSource(null);
+        setSelectedRegisterRow(null);
         resetForm();
       },
     }
@@ -649,6 +730,45 @@ const Candidates = () => {
       { skills: '', experience_years: '', education: '', summary: '' },
       { skills: '', experience_years: '', education: '', summary: '' },
     ]);
+  };
+
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    setAddCandidateSource(null);
+    setSelectedRegisterRow(null);
+    resetForm();
+  };
+
+  const handleChooseCreateNewProfile = () => {
+    resetForm();
+    setAddCandidateSource('manual');
+    setSelectedRegisterRow(null);
+    setShowAddMethodModal(false);
+    setShowAddModal(true);
+  };
+
+  const handleChooseOnboardFromRegister = () => {
+    setRegisterPickerSearch('');
+    setRegisterPickerSelectedId(null);
+    setShowAddMethodModal(false);
+    setShowRegisterSelectModal(true);
+  };
+
+  const handleContinueFromRegisterSelection = () => {
+    const row = registerRows.find((r) => String(r.id) === String(registerPickerSelectedId));
+    if (!row) return;
+    const mapped = mapRegisterRowToCandidateForm(row);
+    setCandidateFormData(mapped);
+    setResumeFiles([null, null, null]);
+    setResumeData([
+      { skills: '', experience_years: '', education: '', summary: '' },
+      { skills: '', experience_years: '', education: '', summary: '' },
+      { skills: '', experience_years: '', education: '', summary: '' },
+    ]);
+    setAddCandidateSource('register');
+    setSelectedRegisterRow(row);
+    setShowRegisterSelectModal(false);
+    setShowAddModal(true);
   };
 
   const handleAddCandidate = (e) => {
@@ -740,7 +860,7 @@ const Candidates = () => {
         {user?.role === 'admin' && (
           <button 
             className="btn btn-primary"
-            onClick={() => setShowAddModal(true)}
+            onClick={() => setShowAddMethodModal(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <FiPlus /> Add Candidate
@@ -1138,21 +1258,193 @@ const Candidates = () => {
         </table>
       </div>
 
-      {/* Add Candidate Modal */}
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content add-candidate-modal" onClick={(e) => e.stopPropagation()}>
+      {/* Add candidate: choose onboarding vs new profile */}
+      {showAddMethodModal && (
+        <div className="modal-overlay" onClick={() => setShowAddMethodModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+            <div className="modal-header">
+              <h2>Add candidate</h2>
+              <button type="button" className="btn-close-modal" onClick={() => setShowAddMethodModal(false)}>
+                <FiX />
+              </button>
+            </div>
+            <p style={{ marginBottom: 20, color: '#666' }}>
+              Choose how you want to add this candidate.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  textAlign: 'left',
+                  padding: 16,
+                  height: 'auto',
+                }}
+                onClick={handleChooseOnboardFromRegister}
+              >
+                <FiUsers style={{ flexShrink: 0, marginTop: 4 }} />
+                <span>
+                  <strong>Onboard registered users</strong>
+                  <br />
+                  <span style={{ fontWeight: 400, fontSize: 14, color: '#555' }}>
+                    Pick someone from the Register list. We&apos;ll pre-fill their details; you add password and anything else.
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  textAlign: 'left',
+                  padding: 16,
+                  height: 'auto',
+                }}
+                onClick={handleChooseCreateNewProfile}
+              >
+                <FiEdit3 style={{ flexShrink: 0, marginTop: 4 }} />
+                <span>
+                  <strong>Create new profile</strong>
+                  <br />
+                  <span style={{ fontWeight: 400, fontSize: 14, color: '#555' }}>
+                    Enter all candidate details manually (same as before).
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Select register row to onboard */}
+      {showRegisterSelectModal && (
+        <div className="modal-overlay" onClick={() => { setShowRegisterSelectModal(false); setShowAddMethodModal(true); }}>
+          <div className="modal-content add-candidate-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h2>
-                <FiUser /> Add New Candidate
+                <FiUsers /> Onboard from Register
               </h2>
               <button
+                type="button"
                 className="btn-close-modal"
-                onClick={() => setShowAddModal(false)}
+                onClick={() => { setShowRegisterSelectModal(false); setShowAddMethodModal(true); }}
               >
                 <FiX />
               </button>
             </div>
+            <div className="form-group" style={{ marginBottom: 12 }}>
+              <label>Search</label>
+              <input
+                type="text"
+                placeholder="Name, email, phone, position, ref…"
+                value={registerPickerSearch}
+                onChange={(e) => setRegisterPickerSearch(e.target.value)}
+              />
+            </div>
+            <div style={{ overflow: 'auto', flex: 1, border: '1px solid #e0e0e0', borderRadius: 6 }}>
+              {registerRowsLoading && <div className="loading" style={{ padding: 24 }}>Loading register list…</div>}
+              {registerRowsError && (
+                <div className="error" style={{ padding: 16 }}>
+                  Could not load register list. Ensure you have access to Register data.
+                </div>
+              )}
+              {!registerRowsLoading && !registerRowsError && filteredRegisterRows.length === 0 && (
+                <div className="empty-state" style={{ padding: 24 }}>No matching records.</div>
+              )}
+              {!registerRowsLoading && !registerRowsError && filteredRegisterRows.length > 0 && (
+                <table className="table" style={{ margin: 0, fontSize: 14 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 48 }} />
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Phone</th>
+                      <th>Position</th>
+                      <th>Start</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRegisterRows.map((r) => {
+                      const fname = r.fname ?? r.first_name ?? '';
+                      const lname = r.lname ?? r.last_name ?? '';
+                      const name = `${fname} ${lname}`.trim() || '—';
+                      const selected = String(registerPickerSelectedId) === String(r.id);
+                      return (
+                        <tr
+                          key={r.id ?? `${r.email}-${name}`}
+                          onClick={() => setRegisterPickerSelectedId(r.id)}
+                          style={{
+                            cursor: 'pointer',
+                            background: selected ? 'rgba(0,123,255,0.08)' : undefined,
+                          }}
+                        >
+                          <td>
+                            <input
+                              type="radio"
+                              name="registerPick"
+                              checked={selected}
+                              onChange={() => setRegisterPickerSelectedId(r.id)}
+                            />
+                          </td>
+                          <td>{name}</td>
+                          <td>{r.email ?? ''}</td>
+                          <td>{r.phone ?? ''}</td>
+                          <td>{r.position ?? ''}</td>
+                          <td>{r.start_date ? String(r.start_date).slice(0, 10) : ''}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="modal-actions" style={{ marginTop: 16 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => { setShowRegisterSelectModal(false); setShowAddMethodModal(true); }}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!registerPickerSelectedId}
+                onClick={handleContinueFromRegisterSelection}
+              >
+                Continue with selected
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Candidate Modal */}
+      {showAddModal && (
+        <div className="modal-overlay" onClick={closeAddModal}>
+          <div className="modal-content add-candidate-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                <FiUser /> {addCandidateSource === 'register' ? 'Onboard candidate' : 'Add New Candidate'}
+              </h2>
+              <button
+                className="btn-close-modal"
+                onClick={closeAddModal}
+              >
+                <FiX />
+              </button>
+            </div>
+            {addCandidateSource === 'register' && selectedRegisterRow && (
+              <p style={{ padding: '0 24px', marginTop: -8, marginBottom: 16, color: '#555', fontSize: 14 }}>
+                Pre-filled from register
+                {selectedRegisterRow.email ? ` (${selectedRegisterRow.email})` : ''}. Set a password and complete any missing fields.
+              </p>
+            )}
 
             <form onSubmit={handleAddCandidate} className="add-candidate-form">
               <div className="form-section">
@@ -1198,7 +1490,7 @@ const Candidates = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Password *</label>
+                    <label>Password * {addCandidateSource === 'register' && <span style={{ fontWeight: 400 }}>(for dashboard login)</span>}</label>
                     <input
                       type="password"
                       value={candidateFormData.password}
@@ -1531,7 +1823,7 @@ const Candidates = () => {
                 <button
                   type="button"
                   className="btn btn-secondary"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={closeAddModal}
                 >
                   Cancel
                 </button>

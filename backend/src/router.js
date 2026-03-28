@@ -8,6 +8,7 @@ import { handleResumes } from './routes/resumes.js';
 import { handleMatches } from './routes/matches.js';
 import { handleCandidates } from './routes/candidates.js';
 import { handleCandidateProfiles } from './routes/candidateProfiles.js';
+import { handleRegisterCandidates } from './routes/registerCandidates.js';
 import { handleTimesheets } from './routes/timesheets.js';
 import { handleKPIs } from './routes/kpis.js';
 import { handleUsers } from './routes/users.js';
@@ -158,6 +159,8 @@ export async function handleRequest(request, env, ctx) {
       response = await handleCandidates(request, env, user);
     } else if (path.startsWith('/api/candidate-profiles')) {
       response = await handleCandidateProfiles(request, env, user);
+    } else if (path.startsWith('/api/register-candidates')) {
+      response = await handleRegisterCandidates(request, env, user);
     } else if (path.startsWith('/api/timesheets')) {
       response = await handleTimesheets(request, env, user);
     } else if (path.startsWith('/api/kpis')) {
