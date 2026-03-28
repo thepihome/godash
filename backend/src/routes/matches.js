@@ -1,11 +1,138 @@
 /**
  * Matches routes for Cloudflare Workers
- * Handles job matching based on job classification
+ * Handles job matching based on job classification and AI scoring
  */
 
 import { query, queryOne, execute } from '../utils/db.js';
 import { addCorsHeaders } from '../utils/cors.js';
 import { authorize } from '../middleware/auth.js';
+import { getAiMatchingConfig } from '../utils/appSettingsDb.js';
+import { scoreMatchWithAi, buildJobText, buildCandidateText } from '../utils/aiMatchClient.js';
+
+function parseJobSkillsField(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try {
+    const p = JSON.parse(val);
+    return Array.isArray(p) ? p : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Run AI scoring for one job against all active candidates; upsert job_matches when score >= min.
+ */
+export async function runAiMatchForJob(env, jobId) {
+  const config = await getAiMatchingConfig(env);
+  const provider = config.provider;
+  if (provider === 'openai' && !config.openai_api_key) {
+    throw new Error('OpenAI API key not configured');
+  }
+  if (provider === 'anthropic' && !config.anthropic_api_key) {
+    throw new Error('Anthropic API key not configured');
+  }
+  if (provider === 'gemini' && !config.gemini_api_key) {
+    throw new Error('Gemini API key not configured');
+  }
+
+  const job = await queryOne(
+    env,
+    `SELECT j.*, jr.name as job_classification_name
+     FROM jobs j
+     LEFT JOIN job_roles jr ON j.job_classification = jr.id
+     WHERE j.id = ?`,
+    [jobId]
+  );
+  if (!job) {
+    return { error: 'Job not found' };
+  }
+  job.required_skills = parseJobSkillsField(job.required_skills);
+  job.preferred_skills = parseJobSkillsField(job.preferred_skills);
+
+  const candidates = await query(
+    env,
+    `SELECT u.id, u.first_name, u.last_name, u.email, u.phone,
+            cp.current_job_title, cp.current_company, cp.years_of_experience, cp.summary, cp.additional_notes
+     FROM users u
+     INNER JOIN candidate_profiles cp ON u.id = cp.user_id
+     WHERE u.role = 'candidate' AND u.is_active = 1`
+  );
+
+  const minScore = config.min_match_score ?? 35;
+  let matched = 0;
+  let cleared = 0;
+  const failures = [];
+
+  for (const row of candidates) {
+    const profile = {
+      current_job_title: row.current_job_title,
+      current_company: row.current_company,
+      years_of_experience: row.years_of_experience,
+      summary: row.summary,
+      additional_notes: row.additional_notes,
+    };
+    const userRow = {
+      first_name: row.first_name,
+      last_name: row.last_name,
+      email: row.email,
+      phone: row.phone,
+    };
+    const resume = await queryOne(
+      env,
+      'SELECT * FROM resumes WHERE user_id = ? ORDER BY uploaded_at DESC LIMIT 1',
+      [row.id]
+    );
+
+    try {
+      const jobText = buildJobText(job);
+      const candText = buildCandidateText(userRow, profile, resume);
+      const { score, summary } = await scoreMatchWithAi({ provider, config }, jobText, candText);
+
+      if (score < minScore) {
+        await execute(env, 'DELETE FROM job_matches WHERE job_id = ? AND candidate_id = ?', [jobId, row.id]);
+        cleared++;
+        continue;
+      }
+
+      const existing = await queryOne(
+        env,
+        'SELECT id, resume_id FROM job_matches WHERE job_id = ? AND candidate_id = ? ORDER BY id LIMIT 1',
+        [jobId, row.id]
+      );
+      const resumeId = resume?.id ?? null;
+      const notes = summary ? `[AI] ${summary}`.slice(0, 2000) : '[AI]';
+
+      if (existing) {
+        await execute(
+          env,
+          `UPDATE job_matches SET match_score = ?, matched_at = datetime('now'), notes = ?,
+           resume_id = COALESCE(?, resume_id) WHERE id = ?`,
+          [score, notes, resumeId, existing.id]
+        );
+      } else {
+        await execute(
+          env,
+          `INSERT INTO job_matches (job_id, resume_id, candidate_id, match_score, skills_match, experience_match, education_match, notes)
+           VALUES (?, ?, ?, ?, 0, 0, 0, ?)`,
+          [jobId, resumeId, row.id, score, notes]
+        );
+      }
+      matched++;
+    } catch (e) {
+      console.error('AI match error candidate', row.id, e);
+      failures.push({ candidate_id: row.id, error: e.message });
+    }
+  }
+
+  return {
+    job_id: Number(jobId),
+    upserted: matched,
+    below_threshold_removed: cleared,
+    failures,
+    total_candidates: candidates.length,
+  };
+}
 
 // Auto-match candidates to jobs based on job classification
 export async function autoMatchByClassification(env, jobId) {
@@ -191,6 +318,48 @@ export async function handleMatches(request, env, user) {
   const path = url.pathname;
   const method = request.method;
 
+  // AI recompute matches for one job (admin/consultant)
+  const aiRecomputeJobMatch = path.match(/^\/api\/matches\/ai-recompute-job\/(\d+)$/);
+  if (aiRecomputeJobMatch && method === 'POST') {
+    const authError = authorize('consultant', 'admin')(user);
+    if (authError) {
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: authError.error }),
+          { status: authError.status, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+    try {
+      const jobId = aiRecomputeJobMatch[1];
+      const result = await runAiMatchForJob(env, jobId);
+      if (result.error) {
+        return addCorsHeaders(
+          new Response(JSON.stringify(result), { status: 404, headers: { 'Content-Type': 'application/json' } }),
+          env,
+          request
+        );
+      }
+      return addCorsHeaders(
+        new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } }),
+        env,
+        request
+      );
+    } catch (error) {
+      console.error('AI recompute job:', error);
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: error.message || 'Server error' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+  }
+
   // Auto-match candidates to a job based on classification
   const autoMatchMatch = path.match(/^\/api\/matches\/auto-match\/(\d+)$/);
   if (autoMatchMatch && method === 'POST') {
@@ -254,7 +423,7 @@ export async function handleMatches(request, env, user) {
                 j.title as job_title
          FROM job_matches jm
          INNER JOIN jobs j ON jm.job_id = j.id
-         WHERE jm.candidate_id = ?
+         WHERE jm.candidate_id = ? AND j.status = 'active'
          ORDER BY jm.match_score DESC, jm.matched_at DESC`,
         [candidateId]
       );

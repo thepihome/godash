@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { FiSettings, FiUser, FiDroplet, FiUsers, FiShield, FiSave, FiX, FiPlus, FiEdit, FiTrash2, FiMail, FiCalendar, FiEdit2, FiUserPlus, FiUserMinus, FiInfo } from 'react-icons/fi';
+import { FiSettings, FiUser, FiDroplet, FiUsers, FiShield, FiSave, FiX, FiPlus, FiEdit, FiTrash2, FiMail, FiCalendar, FiEdit2, FiUserPlus, FiUserMinus, FiInfo, FiZap } from 'react-icons/fi';
+import AiMatchingSettings from '../components/AiMatchingSettings';
 import './Settings.css';
 
 const Settings = () => {
@@ -99,6 +100,7 @@ const Settings = () => {
       { id: 'users', label: 'Users', icon: FiUsers, roles: ['admin'] },
       { id: 'groups', label: 'Groups', icon: FiUsers, roles: ['admin'] },
       { id: 'permissions', label: 'Permissions', icon: FiShield, roles: ['admin'] },
+      { id: 'ai-matching', label: 'AI matching', icon: FiZap, roles: ['admin'] },
     ] : []),
   ];
 
@@ -250,6 +252,8 @@ const Settings = () => {
           {activeTab === 'groups' && user?.role === 'admin' && <GroupsManagement />}
 
           {activeTab === 'permissions' && user?.role === 'admin' && <PermissionsManagement />}
+
+          {activeTab === 'ai-matching' && user?.role === 'admin' && <AiMatchingSettings />}
         </div>
       </div>
     </div>

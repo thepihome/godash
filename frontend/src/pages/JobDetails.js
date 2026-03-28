@@ -59,9 +59,14 @@ const JobDetails = () => {
       <div className="job-details-card">
         <div className="job-details-header">
           <h1>{job.title}</h1>
-          <span className={`badge badge-${job.status === 'active' ? 'success' : 'warning'}`}>
-            {job.status}
-          </span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {user?.role === 'candidate' && job.match_score != null && (
+              <span className="badge badge-info">Match {Math.round(Number(job.match_score))}%</span>
+            )}
+            <span className={`badge badge-${job.status === 'active' ? 'success' : 'warning'}`}>
+              {job.status}
+            </span>
+          </div>
         </div>
 
         <p className="job-company">{job.company}</p>

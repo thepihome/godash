@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiSearch, FiMapPin, FiDollarSign, FiX, FiBriefcase, FiLink, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiSearch, FiMapPin, FiDollarSign, FiX, FiBriefcase, FiLink, FiEdit, FiTrash2, FiZap } from 'react-icons/fi';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import './Jobs.css';
 
@@ -111,10 +111,29 @@ const Jobs = () => {
     }
   );
 
-  // Initialize resizable columns hook
+  const aiMatchJobMutation = useMutation(
+    (jobId) => api.post(`/matches/ai-recompute-job/${jobId}`),
+    {
+      onSuccess: (res) => {
+        queryClient.invalidateQueries('jobs');
+        queryClient.invalidateQueries('all-matches');
+        window.alert(
+          `AI matching finished: ${res.data.upserted} pairs saved, ${res.data.below_threshold_removed} below threshold removed.`
+        );
+      },
+      onError: (e) => window.alert(e.response?.data?.error || e.message),
+    }
+  );
+
+  const isCandidate = user?.role === 'candidate';
+  const isStaff = user?.role === 'consultant' || user?.role === 'admin';
+
+  // Initialize resizable columns hook (candidate: match score; staff: coverage %)
   const { getColumnProps, ResizeHandle, tableRef } = useResizableColumns(
-    [150, 250, 180, 100, 120, 100, 120], // Initial widths in pixels
-    'jobs-column-widths'
+    isCandidate
+      ? [150, 250, 180, 100, 120, 88, 100]
+      : [150, 250, 180, 100, 120, 120, 100, 120],
+    isCandidate ? 'jobs-column-widths-candidate' : 'jobs-column-widths-staff'
   );
 
   const handlePostJob = (e) => {
@@ -229,8 +248,16 @@ const Jobs = () => {
               <th {...getColumnProps(2)}>Location<ResizeHandle index={2} /></th>
               <th {...getColumnProps(3)}>Type<ResizeHandle index={3} /></th>
               <th {...getColumnProps(4)}>Salary<ResizeHandle index={4} /></th>
-              <th {...getColumnProps(5)}>Status<ResizeHandle index={5} /></th>
-              {(user?.role === 'consultant' || user?.role === 'admin') && <th {...getColumnProps(6)}>Actions<ResizeHandle index={6} /></th>}
+              {isCandidate && (
+                <th {...getColumnProps(5)}>Match<ResizeHandle index={5} /></th>
+              )}
+              {isStaff && (
+                <th {...getColumnProps(5)} title="Distinct candidates with a stored match / all active candidates">
+                  Match coverage<ResizeHandle index={5} />
+                </th>
+              )}
+              <th {...getColumnProps(isCandidate || isStaff ? 6 : 5)}>Status<ResizeHandle index={isCandidate || isStaff ? 6 : 5} /></th>
+              {isStaff && <th {...getColumnProps(7)}>Actions<ResizeHandle index={7} /></th>}
             </tr>
           </thead>
           <tbody>
@@ -288,14 +315,43 @@ const Jobs = () => {
                       'Not disclosed'
                     )}
                   </td>
+                  {isCandidate && (
+                    <td>
+                      <strong>{job.match_score != null ? `${Math.round(Number(job.match_score))}%` : '—'}</strong>
+                    </td>
+                  )}
+                  {isStaff && (
+                    <td>
+                      <span title={`${job.matched_candidate_count || 0} candidates with a match`}>
+                        {job.match_percentage != null ? `${job.match_percentage}%` : '0%'}
+                        <span style={{ color: '#888', fontSize: 12, marginLeft: 6 }}>
+                          ({job.matched_candidate_count ?? 0})
+                        </span>
+                      </span>
+                    </td>
+                  )}
                   <td>
                     <span className={`badge badge-${job.status === 'active' ? 'success' : job.status === 'closed' ? 'warning' : job.status === 'draft' ? 'info' : 'danger'}`}>
                       {job.status}
                     </span>
                   </td>
-                  {(user?.role === 'consultant' || user?.role === 'admin') && (
+                  {isStaff && (
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="job-actions-inline">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Run AI matching for "${job.title}"?`)) {
+                              aiMatchJobMutation.mutate(job.id);
+                            }
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          title="AI match candidates to this job"
+                          disabled={aiMatchJobMutation.isLoading}
+                        >
+                          <FiZap />
+                        </button>
                         <button
                           onClick={(e) => handleEditJob(job, e)}
                           className="btn btn-secondary btn-sm"
@@ -317,8 +373,8 @@ const Jobs = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={(user?.role === 'consultant' || user?.role === 'admin') ? 7 : 6} className="empty-state">
-                  No jobs found
+                <td colSpan={isCandidate ? 7 : isStaff ? 8 : 6} className="empty-state">
+                  {isCandidate ? 'No matched jobs yet. An admin can run AI matching in Settings.' : 'No jobs found'}
                 </td>
               </tr>
             )}

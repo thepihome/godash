@@ -11,7 +11,7 @@ export async function handleJobs(request, env, user) {
   const path = url.pathname;
   const method = request.method;
 
-  // Get all jobs
+  // Get all jobs (candidate: only AI-matched jobs, sorted by match score; staff: match coverage % + date)
   if (path === '/api/jobs' && method === 'GET') {
     try {
       const { searchParams } = url;
@@ -21,43 +21,70 @@ export async function handleJobs(request, env, user) {
       const employment_type = searchParams.get('employment_type');
       const include_deleted = searchParams.get('include_deleted');
 
-      let sql = `SELECT j.*, jr.name as job_classification_name 
-                 FROM jobs j 
-                 LEFT JOIN job_roles jr ON j.job_classification = jr.id 
-                 WHERE 1=1`;
-      const params = [];
+      const appendFilters = (sql, params) => {
+        if (include_deleted !== 'true') {
+          sql += " AND j.status != 'deleted'";
+        }
+        if (status) {
+          sql += ' AND j.status = ?';
+          params.push(status);
+        }
+        if (search) {
+          sql += ' AND (j.title LIKE ? OR j.description LIKE ? OR j.company LIKE ?)';
+          const searchTerm = `%${search}%`;
+          params.push(searchTerm, searchTerm, searchTerm);
+        }
+        if (location) {
+          sql += ' AND j.location LIKE ?';
+          params.push(`%${location}%`);
+        }
+        if (employment_type) {
+          sql += ' AND j.employment_type = ?';
+          params.push(employment_type);
+        }
+        return { sql, params };
+      };
 
-      if (include_deleted !== 'true') {
-        sql += " AND status != 'deleted'";
+      let sql;
+      let params = [];
+
+      if (user.role === 'candidate') {
+        sql = `SELECT j.*, jr.name as job_classification_name, jm.match_score AS match_score
+               FROM jobs j
+               INNER JOIN job_matches jm ON j.id = jm.job_id AND jm.candidate_id = ?
+               LEFT JOIN job_roles jr ON j.job_classification = jr.id
+               WHERE j.status = 'active'`;
+        params = [user.id];
+        const f = appendFilters(sql, params);
+        sql = f.sql;
+        params = f.params;
+        sql += ' ORDER BY jm.match_score DESC, j.created_at DESC';
+      } else {
+        const totalRow = await queryOne(
+          env,
+          `SELECT COUNT(*) as c FROM users u
+           INNER JOIN candidate_profiles cp ON u.id = cp.user_id
+           WHERE u.role = 'candidate' AND u.is_active = 1`
+        );
+        const totalCandidates = Math.max(1, Number(totalRow?.c || 0));
+
+        sql = `SELECT j.*, jr.name as job_classification_name,
+               (SELECT COUNT(DISTINCT jm.candidate_id) FROM job_matches jm WHERE jm.job_id = j.id) AS matched_candidate_count,
+               ROUND(100.0 * (SELECT COUNT(DISTINCT jm.candidate_id) FROM job_matches jm WHERE jm.job_id = j.id) / ?, 1) AS match_percentage
+               FROM jobs j
+               LEFT JOIN job_roles jr ON j.job_classification = jr.id
+               WHERE 1=1`;
+        params = [totalCandidates];
+        const f = appendFilters(sql, params);
+        sql = f.sql;
+        params = f.params;
+        sql += ` ORDER BY (CAST((SELECT COUNT(DISTINCT jm.candidate_id) FROM job_matches jm WHERE jm.job_id = j.id) AS REAL) / ?) DESC, j.created_at DESC`;
+        params.push(totalCandidates);
       }
-
-      if (status) {
-        sql += ' AND status = ?';
-        params.push(status);
-      }
-
-      if (search) {
-        sql += ' AND (title LIKE ? OR description LIKE ? OR company LIKE ?)';
-        const searchTerm = `%${search}%`;
-        params.push(searchTerm, searchTerm, searchTerm);
-      }
-
-      if (location) {
-        sql += ' AND location LIKE ?';
-        params.push(`%${location}%`);
-      }
-
-      if (employment_type) {
-        sql += ' AND employment_type = ?';
-        params.push(employment_type);
-      }
-
-      sql += ' ORDER BY created_at DESC';
 
       const results = await query(env, sql, params);
 
-      // Parse JSON fields
-      const jobs = results.map(job => {
+      const jobs = results.map((job) => {
         if (job.required_skills) {
           try {
             job.required_skills = JSON.parse(job.required_skills);
@@ -101,12 +128,27 @@ export async function handleJobs(request, env, user) {
   if (singleJobMatch && method === 'GET') {
     try {
       const jobId = singleJobMatch[1];
-      const job = await queryOne(env, 
-        `SELECT j.*, jr.name as job_classification_name 
-         FROM jobs j 
-         LEFT JOIN job_roles jr ON j.job_classification = jr.id 
-         WHERE j.id = ?`, 
-        [jobId]);
+      let job;
+      if (user.role === 'candidate') {
+        job = await queryOne(
+          env,
+          `SELECT j.*, jr.name as job_classification_name, jm.match_score AS match_score
+           FROM jobs j
+           INNER JOIN job_matches jm ON j.id = jm.job_id AND jm.candidate_id = ?
+           LEFT JOIN job_roles jr ON j.job_classification = jr.id
+           WHERE j.id = ? AND j.status = 'active'`,
+          [user.id, jobId]
+        );
+      } else {
+        job = await queryOne(
+          env,
+          `SELECT j.*, jr.name as job_classification_name
+           FROM jobs j
+           LEFT JOIN job_roles jr ON j.job_classification = jr.id
+           WHERE j.id = ?`,
+          [jobId]
+        );
+      }
 
       if (!job) {
         return addCorsHeaders(

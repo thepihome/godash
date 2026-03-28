@@ -243,6 +243,13 @@ CREATE TABLE IF NOT EXISTS activity_logs (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- App settings (e.g. AI matching API keys — admin-only via API)
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY NOT NULL,
+  value TEXT,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user ON activity_logs(user_id);
