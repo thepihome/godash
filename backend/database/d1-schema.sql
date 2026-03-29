@@ -266,3 +266,4 @@ CREATE INDEX IF NOT EXISTS idx_timesheets_user ON timesheets(user_id);
 CREATE INDEX IF NOT EXISTS idx_timesheets_date ON timesheets(date);
 CREATE INDEX IF NOT EXISTS idx_kpis_user ON kpis(user_id);
 
+-- After creating a fresh D1 DB, seed permissions + role_permissions (see database/migrations/seed_permissions_d1.sql).
