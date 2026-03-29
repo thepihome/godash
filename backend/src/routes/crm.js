@@ -3,6 +3,20 @@
  */
 
 import { query, queryOne, execute } from '../utils/db.js';
+
+const CRM_INTERACTION_TYPES = [
+  'call',
+  'email',
+  'meeting',
+  'note',
+  'linkedin',
+  'sms',
+  'video_call',
+  'interview',
+  'task',
+];
+
+const CRM_STATUSES = ['open', 'pending', 'completed', 'cancelled', 'scheduled'];
 import { addCorsHeaders } from '../utils/cors.js';
 import { authorize } from '../middleware/auth.js';
 
@@ -85,11 +99,22 @@ export async function handleCRM(request, env, user) {
         );
       }
 
-      const validTypes = ['call', 'email', 'meeting', 'note'];
-      if (!validTypes.includes(interaction_type)) {
+      if (!CRM_INTERACTION_TYPES.includes(interaction_type)) {
         return addCorsHeaders(
           new Response(
-            JSON.stringify({ error: `Interaction type must be one of: ${validTypes.join(', ')}` }),
+            JSON.stringify({ error: `Interaction type must be one of: ${CRM_INTERACTION_TYPES.join(', ')}` }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+
+      const statusVal = status || 'open';
+      if (!CRM_STATUSES.includes(statusVal)) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: `Status must be one of: ${CRM_STATUSES.join(', ')}` }),
             { status: 400, headers: { 'Content-Type': 'application/json' } }
           ),
           env,
@@ -109,7 +134,7 @@ export async function handleCRM(request, env, user) {
           interaction_date,
           notes || null,
           follow_up_date || null,
-          status || 'open'
+          statusVal
         ]
       );
 
@@ -208,11 +233,10 @@ export async function handleCRM(request, env, user) {
         updateValues.push(candidate_id);
       }
       if (interaction_type !== undefined) {
-        const validTypes = ['call', 'email', 'meeting', 'note'];
-        if (!validTypes.includes(interaction_type)) {
+        if (!CRM_INTERACTION_TYPES.includes(interaction_type)) {
           return addCorsHeaders(
             new Response(
-              JSON.stringify({ error: `Interaction type must be one of: ${validTypes.join(', ')}` }),
+              JSON.stringify({ error: `Interaction type must be one of: ${CRM_INTERACTION_TYPES.join(', ')}` }),
               { status: 400, headers: { 'Content-Type': 'application/json' } }
             ),
             env,
@@ -235,6 +259,16 @@ export async function handleCRM(request, env, user) {
         updateValues.push(follow_up_date || null);
       }
       if (status !== undefined) {
+        if (!CRM_STATUSES.includes(status)) {
+          return addCorsHeaders(
+            new Response(
+              JSON.stringify({ error: `Status must be one of: ${CRM_STATUSES.join(', ')}` }),
+              { status: 400, headers: { 'Content-Type': 'application/json' } }
+            ),
+            env,
+            request
+          );
+        }
         updateFields.push('status = ?');
         updateValues.push(status);
       }
