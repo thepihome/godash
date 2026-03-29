@@ -2,7 +2,7 @@
  * Permissions routes for Cloudflare Workers
  */
 
-import { query, queryOne } from '../utils/db.js';
+import { query, queryOne, execute } from '../utils/db.js';
 import { addCorsHeaders } from '../utils/cors.js';
 import { authorize } from '../middleware/auth.js';
 import { handleAiMatchingAdmin } from './aiSettings.js';
@@ -124,6 +124,60 @@ export async function handlePermissions(request, env, user) {
     }
   }
 
+  if (rolePermissionsMatch && method === 'POST') {
+    try {
+      const role = rolePermissionsMatch[1];
+
+      if (!['candidate', 'consultant', 'admin'].includes(role)) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Invalid role' }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+
+      const body = await request.json();
+      const permList = body?.permissions;
+
+      await execute(env, 'DELETE FROM role_permissions WHERE role = ?', [role]);
+
+      if (Array.isArray(permList)) {
+        for (const row of permList) {
+          const pid = row?.permission_id;
+          if (pid == null) continue;
+          if (row.granted === false) continue;
+          await execute(
+            env,
+            'INSERT INTO role_permissions (role, permission_id) VALUES (?, ?)',
+            [role, pid]
+          );
+        }
+      }
+
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ message: 'Role permissions updated successfully' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    } catch (error) {
+      console.error('Error updating role permissions:', error);
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: 'Server error', details: error.message }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+  }
+
   // Get permissions for a specific user
   const userPermissionsMatch = path.match(/^\/api\/permissions\/user\/(\d+)$/);
   if (userPermissionsMatch && method === 'GET') {
@@ -179,25 +233,31 @@ export async function handlePermissions(request, env, user) {
         [userId]
       );
 
-      // Combine and deduplicate (user permissions override role permissions)
+      // Combine (user overrides group overrides role). Track source for admin UI.
       const permissionMap = new Map();
+      const sourceMap = new Map();
 
-      // Add role permissions first
       rolePermissions.forEach(p => {
         permissionMap.set(p.id, { ...p, granted: true });
+        sourceMap.set(p.id, 'role');
       });
 
-      // Override with group permissions
       groupPermissions.forEach(p => {
-        permissionMap.set(p.id, { ...p, granted: p.granted === 1 || p.granted === true });
+        const granted = p.granted === 1 || p.granted === true;
+        permissionMap.set(p.id, { ...p, granted });
+        sourceMap.set(p.id, 'group');
       });
 
-      // Override with user-specific permissions
       userPermissions.forEach(p => {
-        permissionMap.set(p.id, { ...p, granted: p.granted === 1 || p.granted === true });
+        const granted = p.granted === 1 || p.granted === true;
+        permissionMap.set(p.id, { ...p, granted });
+        sourceMap.set(p.id, 'user');
       });
 
-      const allPermissions = Array.from(permissionMap.values());
+      const allPermissions = Array.from(permissionMap.values()).map(p => ({
+        ...p,
+        source: sourceMap.get(p.id),
+      }));
 
       return addCorsHeaders(
         new Response(
@@ -212,6 +272,60 @@ export async function handlePermissions(request, env, user) {
       );
     } catch (error) {
       console.error('Error fetching user permissions:', error);
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: 'Server error', details: error.message }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+  }
+
+  if (userPermissionsMatch && method === 'POST') {
+    try {
+      const userId = userPermissionsMatch[1];
+      const body = await request.json();
+      const permList = body?.permissions;
+
+      const userRow = await queryOne(env, 'SELECT id FROM users WHERE id = ?', [userId]);
+      if (!userRow) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'User not found' }),
+            { status: 404, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+
+      await execute(env, 'DELETE FROM user_permissions WHERE user_id = ?', [userId]);
+
+      if (Array.isArray(permList)) {
+        for (const row of permList) {
+          const pid = row?.permission_id;
+          if (pid == null) continue;
+          const granted = row.granted !== false ? 1 : 0;
+          await execute(
+            env,
+            'INSERT INTO user_permissions (user_id, permission_id, granted) VALUES (?, ?, ?)',
+            [userId, pid, granted]
+          );
+        }
+      }
+
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ message: 'User permissions updated successfully' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    } catch (error) {
+      console.error('Error updating user permissions:', error);
       return addCorsHeaders(
         new Response(
           JSON.stringify({ error: 'Server error', details: error.message }),
@@ -267,6 +381,60 @@ export async function handlePermissions(request, env, user) {
       );
     } catch (error) {
       console.error('Error fetching group permissions:', error);
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: 'Server error', details: error.message }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    }
+  }
+
+  if (groupPermissionsMatch && method === 'POST') {
+    try {
+      const groupId = groupPermissionsMatch[1];
+      const body = await request.json();
+      const permList = body?.permissions;
+
+      const group = await queryOne(env, 'SELECT id FROM groups WHERE id = ?', [groupId]);
+      if (!group) {
+        return addCorsHeaders(
+          new Response(
+            JSON.stringify({ error: 'Group not found' }),
+            { status: 404, headers: { 'Content-Type': 'application/json' } }
+          ),
+          env,
+          request
+        );
+      }
+
+      await execute(env, 'DELETE FROM group_permissions WHERE group_id = ?', [groupId]);
+
+      if (Array.isArray(permList)) {
+        for (const row of permList) {
+          const pid = row?.permission_id;
+          if (pid == null) continue;
+          const granted = row.granted !== false ? 1 : 0;
+          await execute(
+            env,
+            'INSERT INTO group_permissions (group_id, permission_id, granted) VALUES (?, ?, ?)',
+            [groupId, pid, granted]
+          );
+        }
+      }
+
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ message: 'Group permissions updated successfully' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        ),
+        env,
+        request
+      );
+    } catch (error) {
+      console.error('Error updating group permissions:', error);
       return addCorsHeaders(
         new Response(
           JSON.stringify({ error: 'Server error', details: error.message }),

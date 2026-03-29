@@ -510,6 +510,28 @@
   background: #28a745;
 }
 
+.permission-source-badge.off {
+  background: #6c757d;
+}
+
+.role-defaults-warning {
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.permissions-section-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary-color, #64748b);
+  margin: 0 0 1.15rem;
+  line-height: 1.55;
+}
+
+.permission-type-selector {
+  flex-wrap: wrap;
+}
+
 .permission-description {
   color: #666;
   font-size: 13px;

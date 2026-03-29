@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
@@ -307,6 +307,10 @@ const UsersManagement = () => {
           is_active: true,
         });
       },
+      onError: (err) => {
+        const msg = err.response?.data?.error || err.message;
+        alert(msg || 'Could not create user');
+      },
     }
   );
 
@@ -402,10 +406,10 @@ const UsersManagement = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const submitData = { ...formData };
-    if (!editingUser || !submitData.password) {
-      delete submitData.password;
-    }
     if (editingUser) {
+      if (!submitData.password || String(submitData.password).trim() === '') {
+        delete submitData.password;
+      }
       updateMutation.mutate({ id: editingUser.id, data: submitData });
     } else {
       createMutation.mutate(submitData);
@@ -1241,12 +1245,38 @@ const GroupsManagement = () => {
   );
 };
 
+const PERMISSION_RESOURCE_LABELS = {
+  tab: 'Navigation — tabs & sections (visibility)',
+  job: 'Jobs — listings and postings',
+  user: 'User accounts',
+  candidate: 'Candidate profiles',
+  timesheet: 'Timesheets',
+  group: 'Groups',
+  kpi: 'KPIs',
+  system: 'System',
+};
+
+const PERMISSION_RESOURCE_ORDER = ['tab', 'job', 'candidate', 'user', 'timesheet', 'group', 'kpi', 'system'];
+
+const PERMISSION_ACTION_ORDER = ['view', 'create', 'edit', 'delete', 'assign', 'approve', 'manage'];
+
+const ACTION_DISPLAY = {
+  view: 'View / access',
+  create: 'Create',
+  edit: 'Edit / modify',
+  delete: 'Delete',
+  assign: 'Assign',
+  approve: 'Approve',
+  manage: 'Manage',
+};
+
 // Permissions Management Component
 const PermissionsManagement = () => {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [permissionType, setPermissionType] = useState('user'); // 'user' or 'group'
+  const [selectedRole, setSelectedRole] = useState('');
+  const [permissionType, setPermissionType] = useState('user');
 
   const { data: permissions, isLoading: loadingPermissions } = useQuery(
     'permissions',
@@ -1263,11 +1293,19 @@ const PermissionsManagement = () => {
     () => api.get('/groups').then(res => res.data)
   );
 
-  const { data: userPermsData } = useQuery(
+  const { data: userPermsData, isLoading: loadingUserPerms } = useQuery(
     ['user-permissions', selectedUser?.id],
     () => api.get(`/permissions/user/${selectedUser.id}`).then(res => res.data),
     {
       enabled: !!selectedUser && permissionType === 'user',
+    }
+  );
+
+  const { data: baselineRolePerms = [] } = useQuery(
+    ['role-permissions', 'baseline', userPermsData?.role],
+    () => api.get(`/permissions/role/${userPermsData.role}`).then(res => res.data),
+    {
+      enabled: !!userPermsData?.role && permissionType === 'user' && !!selectedUser,
     }
   );
 
@@ -1279,66 +1317,122 @@ const PermissionsManagement = () => {
     }
   );
 
+  const { data: rolePermsData } = useQuery(
+    ['role-permissions', selectedRole],
+    () => api.get(`/permissions/role/${selectedRole}`).then(res => res.data),
+    {
+      enabled: !!selectedRole && permissionType === 'role',
+    }
+  );
+
   const updateUserPermissionsMutation = useMutation(
-    ({ userId, permissions }) => api.post(`/permissions/user/${userId}`, { permissions }),
+    ({ userId, permissions: permPayload }) => api.post(`/permissions/user/${userId}`, { permissions: permPayload }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['user-permissions', selectedUser?.id]);
         alert('User permissions updated successfully');
       },
+      onError: (e) => alert(e.response?.data?.error || e.message),
     }
   );
 
   const updateGroupPermissionsMutation = useMutation(
-    ({ groupId, permissions }) => api.post(`/permissions/group/${groupId}`, { permissions }),
+    ({ groupId, permissions: permPayload }) => api.post(`/permissions/group/${groupId}`, { permissions: permPayload }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['group-permissions', selectedGroup?.id]);
         alert('Group permissions updated successfully');
       },
+      onError: (e) => alert(e.response?.data?.error || e.message),
     }
   );
 
-  // Group permissions by resource type
-  const permissionsByResource = permissions?.reduce((acc, perm) => {
-    if (!acc[perm.resource_type]) {
-      acc[perm.resource_type] = [];
+  const updateRolePermissionsMutation = useMutation(
+    ({ role, permissions: permPayload }) => api.post(`/permissions/role/${role}`, { permissions: permPayload }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['role-permissions']);
+        queryClient.invalidateQueries('user-permissions');
+        alert('Role default permissions updated successfully');
+      },
+      onError: (e) => alert(e.response?.data?.error || e.message),
     }
-    acc[perm.resource_type].push(perm);
-    return acc;
-  }, {}) || {};
+  );
 
-  // Get effective permissions for display
+  const permissionsByResource = useMemo(() => {
+    const acc = {};
+    (permissions || []).forEach(perm => {
+      if (!acc[perm.resource_type]) acc[perm.resource_type] = [];
+      acc[perm.resource_type].push(perm);
+    });
+    Object.keys(acc).forEach(key => {
+      acc[key].sort((a, b) => {
+        const ia = PERMISSION_ACTION_ORDER.indexOf(a.action);
+        const ib = PERMISSION_ACTION_ORDER.indexOf(b.action);
+        if (ia !== -1 || ib !== -1) {
+          if (ia === -1) return 1;
+          if (ib === -1) return -1;
+          if (ia !== ib) return ia - ib;
+        }
+        return String(a.name).localeCompare(String(b.name));
+      });
+    });
+    return acc;
+  }, [permissions]);
+
+  const sortedResourceEntries = useMemo(() => {
+    return Object.entries(permissionsByResource).sort(([a], [b]) => {
+      const ia = PERMISSION_RESOURCE_ORDER.indexOf(a);
+      const ib = PERMISSION_RESOURCE_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  }, [permissionsByResource]);
+
+  const baselineRoleIds = useMemo(() => new Set((baselineRolePerms || []).map(p => p.id)), [baselineRolePerms]);
+
   const getEffectivePermissions = () => {
+    if (!permissions?.length) return {};
+
     if (permissionType === 'user' && userPermsData) {
       const perms = {};
-      userPermsData.permissions.forEach(p => {
+      (userPermsData.permissions || []).forEach(p => {
         perms[p.id] = { ...p, effective: p.granted !== false, source: p.source || 'user' };
       });
-      // Add role permissions that aren't overridden
-      permissions?.forEach(perm => {
+      permissions.forEach(perm => {
         if (!perms[perm.id]) {
-          // Check if role has this permission
-          const hasRolePerm = userPermsData.role === 'admin' || 
-            (userPermsData.role === 'consultant' && ['tab_dashboard', 'tab_jobs', 'tab_matches', 'tab_candidates', 'tab_timesheets', 'tab_crm', 'tab_settings', 'tab_register', 'job_view', 'job_create', 'job_edit', 'job_delete', 'candidate_view', 'candidate_edit', 'timesheet_view', 'timesheet_create', 'kpi_manage'].includes(perm.name)) ||
-            (userPermsData.role === 'candidate' && ['tab_dashboard', 'tab_jobs', 'tab_resumes', 'tab_matches', 'tab_settings', 'job_view', 'kpi_manage'].includes(perm.name));
+          const hasRolePerm = baselineRoleIds.has(perm.id);
           perms[perm.id] = { ...perm, effective: hasRolePerm, source: 'role' };
         }
       });
       return perms;
     }
+
     if (permissionType === 'group' && groupPermsData) {
       const perms = {};
       groupPermsData.forEach(p => {
-        perms[p.id] = { ...p, effective: p.granted !== false };
+        perms[p.id] = { ...p, effective: p.granted !== false, source: 'group' };
       });
-      permissions?.forEach(perm => {
+      permissions.forEach(perm => {
         if (!perms[perm.id]) {
-          perms[perm.id] = { ...perm, effective: false };
+          perms[perm.id] = { ...perm, effective: false, source: 'none' };
         }
       });
       return perms;
     }
+
+    if (permissionType === 'role' && rolePermsData) {
+      const grantedIds = new Set(rolePermsData.map(p => p.id));
+      const perms = {};
+      permissions.forEach(perm => {
+        const granted = grantedIds.has(perm.id);
+        perms[perm.id] = { ...perm, effective: granted, source: granted ? 'role' : 'none' };
+      });
+      return perms;
+    }
+
     return {};
   };
 
@@ -1348,7 +1442,7 @@ const PermissionsManagement = () => {
     if (permissionType === 'user' && selectedUser) {
       const currentPerms = Object.values(effectivePermissions).map(p => ({
         permission_id: p.id,
-        granted: p.id === permissionId ? granted : (p.effective !== false),
+        granted: p.id === permissionId ? granted : p.effective !== false,
       }));
       updateUserPermissionsMutation.mutate({
         userId: selectedUser.id,
@@ -1357,14 +1451,35 @@ const PermissionsManagement = () => {
     } else if (permissionType === 'group' && selectedGroup) {
       const currentPerms = Object.values(effectivePermissions).map(p => ({
         permission_id: p.id,
-        granted: p.id === permissionId ? granted : (p.effective !== false),
+        granted: p.id === permissionId ? granted : p.effective !== false,
       }));
       updateGroupPermissionsMutation.mutate({
         groupId: selectedGroup.id,
         permissions: currentPerms,
       });
+    } else if (permissionType === 'role' && selectedRole) {
+      const currentPerms = Object.values(effectivePermissions).map(p => ({
+        permission_id: p.id,
+        granted: p.id === permissionId ? granted : p.effective !== false,
+      }));
+      updateRolePermissionsMutation.mutate({
+        role: selectedRole,
+        permissions: currentPerms,
+      });
     }
   };
+
+  const clearSelection = (type) => {
+    setPermissionType(type);
+    setSelectedUser(null);
+    setSelectedGroup(null);
+    setSelectedRole('');
+  };
+
+  const editorActive =
+    (permissionType === 'user' && selectedUser && userPermsData) ||
+    (permissionType === 'group' && selectedGroup) ||
+    (permissionType === 'role' && selectedRole);
 
   return (
     <div className="settings-section">
@@ -1376,42 +1491,44 @@ const PermissionsManagement = () => {
         <div className="permissions-selector">
           <div className="permission-type-selector">
             <button
+              type="button"
               className={`btn ${permissionType === 'user' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => {
-                setPermissionType('user');
-                setSelectedUser(null);
-                setSelectedGroup(null);
-              }}
+              onClick={() => clearSelection('user')}
             >
-              User Permissions
+              By user
             </button>
             <button
+              type="button"
               className={`btn ${permissionType === 'group' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => {
-                setPermissionType('group');
-                setSelectedUser(null);
-                setSelectedGroup(null);
-              }}
+              onClick={() => clearSelection('group')}
             >
-              Group Permissions
+              By group
+            </button>
+            <button
+              type="button"
+              className={`btn ${permissionType === 'role' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => clearSelection('role')}
+            >
+              Role defaults
             </button>
           </div>
 
           {permissionType === 'user' && (
             <div className="entity-selector">
-              <label>Select User:</label>
+              <label htmlFor="perm-select-user">User</label>
               <select
+                id="perm-select-user"
                 value={selectedUser?.id || ''}
                 onChange={(e) => {
-                  const userId = parseInt(e.target.value);
-                  const user = users?.find(u => u.id === userId);
-                  setSelectedUser(user || null);
+                  const userId = parseInt(e.target.value, 10);
+                  const u = users?.find(x => x.id === userId);
+                  setSelectedUser(u || null);
                 }}
               >
-                <option value="">-- Select a user --</option>
-                {users?.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name} ({user.email}) - {user.role}
+                <option value="">— Select a user —</option>
+                {users?.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.first_name} {u.last_name} ({u.email}) — {u.role}
                   </option>
                 ))}
               </select>
@@ -1420,21 +1537,38 @@ const PermissionsManagement = () => {
 
           {permissionType === 'group' && (
             <div className="entity-selector">
-              <label>Select Group:</label>
+              <label htmlFor="perm-select-group">Group</label>
               <select
+                id="perm-select-group"
                 value={selectedGroup?.id || ''}
                 onChange={(e) => {
-                  const groupId = parseInt(e.target.value);
-                  const group = groups?.find(g => g.id === groupId);
-                  setSelectedGroup(group || null);
+                  const groupId = parseInt(e.target.value, 10);
+                  const g = groups?.find(x => x.id === groupId);
+                  setSelectedGroup(g || null);
                 }}
               >
-                <option value="">-- Select a group --</option>
-                {groups?.map(group => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
+                <option value="">— Select a group —</option>
+                {groups?.map(g => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
                   </option>
                 ))}
+              </select>
+            </div>
+          )}
+
+          {permissionType === 'role' && (
+            <div className="entity-selector">
+              <label htmlFor="perm-select-role">Role template</label>
+              <select
+                id="perm-select-role"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+              >
+                <option value="">— Select role —</option>
+                <option value="admin">Administrator</option>
+                <option value="consultant">Consultant</option>
+                <option value="candidate">Candidate</option>
               </select>
             </div>
           )}
@@ -1442,50 +1576,71 @@ const PermissionsManagement = () => {
 
         {loadingPermissions ? (
           <div className="loading">Loading permissions...</div>
-        ) : (permissionType === 'user' && selectedUser) || (permissionType === 'group' && selectedGroup) ? (
+        ) : permissionType === 'user' && selectedUser && loadingUserPerms ? (
+          <div className="loading">Loading user permissions...</div>
+        ) : editorActive ? (
           <div className="permissions-editor">
             <div className="permissions-info-header">
               <h3>
-                {permissionType === 'user' 
-                  ? `Permissions for ${selectedUser.first_name} ${selectedUser.last_name} (${selectedUser.role})`
-                  : `Permissions for ${selectedGroup.name} Group`}
+                {permissionType === 'user' &&
+                  `User: ${selectedUser.first_name} ${selectedUser.last_name} (${selectedUser.role})`}
+                {permissionType === 'group' && `Group: ${selectedGroup.name}`}
+                {permissionType === 'role' && `Role defaults: ${selectedRole}`}
               </h3>
               {permissionType === 'user' && userPermsData && (
                 <p className="permission-note">
-                  Base role: <strong>{userPermsData.role}</strong>. User-specific permissions override role permissions.
+                  Effective access is <strong>user</strong> overrides → <strong>group</strong> → <strong>role</strong>.
+                  Toggles here write <strong>user-specific</strong> rows (full matrix). Role baseline is loaded from the
+                  database for <strong>{userPermsData.role}</strong>.
+                </p>
+              )}
+              {permissionType === 'group' && (
+                <p className="permission-note">
+                  Group grants apply to every member and override their role defaults. Deny explicitly where needed.
+                </p>
+              )}
+              {permissionType === 'role' && (
+                <p className="permission-note role-defaults-warning">
+                  This updates the default permission set for <strong>all</strong> accounts with the{' '}
+                  <strong>{selectedRole}</strong> role (unless overridden by group or user). Use carefully.
                 </p>
               )}
             </div>
 
-            {Object.entries(permissionsByResource).map(([resourceType, perms]) => (
+            <p className="permissions-section-hint">
+              <strong>Tabs</strong> control which areas appear; other rows control viewing vs creating, editing, or
+              deleting content where the API enforces them.
+            </p>
+
+            {sortedResourceEntries.map(([resourceType, perms]) => (
               <div key={resourceType} className="permission-resource-group">
                 <h4 className="resource-type-header">
-                  {resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} Permissions
+                  {PERMISSION_RESOURCE_LABELS[resourceType] ||
+                    `${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} — permissions`}
                 </h4>
                 <div className="permissions-grid">
                   {perms.map(perm => {
                     const effective = effectivePermissions[perm.id];
                     const isGranted = effective?.effective !== false;
-                    const source = effective?.source || (effective?.granted !== false ? 'custom' : 'none');
-                    
+                    const source = effective?.source;
+
                     return (
                       <div key={perm.id} className="permission-item">
                         <div className="permission-info">
                           <div className="permission-name">
                             <strong>{perm.name}</strong>
-                            {source === 'role' && (
-                              <span className="permission-source-badge">Role</span>
-                            )}
-                            {source === 'user' && (
-                              <span className="permission-source-badge user">User</span>
-                            )}
-                            {source === 'group' && (
-                              <span className="permission-source-badge group">Group</span>
+                            {source === 'role' && <span className="permission-source-badge">Role</span>}
+                            {source === 'user' && <span className="permission-source-badge user">User</span>}
+                            {source === 'group' && <span className="permission-source-badge group">Group</span>}
+                            {source === 'none' && permissionType === 'role' && (
+                              <span className="permission-source-badge off">Off</span>
                             )}
                           </div>
                           <div className="permission-description">{perm.description}</div>
                           <div className="permission-action">
-                            <span className="action-badge">{perm.action}</span>
+                            <span className="action-badge">
+                              {ACTION_DISPLAY[perm.action] || perm.action}
+                            </span>
                           </div>
                         </div>
                         <div className="permission-toggle">
@@ -1495,11 +1650,9 @@ const PermissionsManagement = () => {
                               checked={isGranted}
                               onChange={(e) => handlePermissionChange(perm.id, e.target.checked)}
                             />
-                            <span className="toggle-slider"></span>
+                            <span className="toggle-slider" />
                           </label>
-                          <span className="toggle-label">
-                            {isGranted ? 'Granted' : 'Denied'}
-                          </span>
+                          <span className="toggle-label">{isGranted ? 'Granted' : 'Denied'}</span>
                         </div>
                       </div>
                     );
@@ -1510,30 +1663,44 @@ const PermissionsManagement = () => {
           </div>
         ) : (
           <div className="permissions-placeholder">
-            <p>Please select a {permissionType === 'user' ? 'user' : 'group'} to manage permissions.</p>
+            <p>
+              {permissionType === 'user' && 'Select a user to view and edit their permission matrix.'}
+              {permissionType === 'group' && 'Select a group to define overrides for all members.'}
+              {permissionType === 'role' && 'Select Administrator, Consultant, or Candidate to edit default role permissions.'}
+            </p>
           </div>
         )}
       </div>
 
       <div className="permissions-help">
-        <h3>Permission System Overview</h3>
+        <h3>How access is resolved</h3>
         <div className="permission-help-content">
           <div className="help-section">
-            <h4>How Permissions Work</h4>
+            <h4>Priority order</h4>
             <ul>
-              <li><strong>Role Permissions:</strong> Default permissions assigned based on user role (Admin, Consultant, Candidate)</li>
-              <li><strong>Group Permissions:</strong> Permissions assigned to groups override role permissions for all members</li>
-              <li><strong>User Permissions:</strong> Individual user permissions override both role and group permissions</li>
-              <li><strong>Priority:</strong> User &gt; Group &gt; Role</li>
+              <li>
+                <strong>User-specific</strong> (this screen, &quot;By user&quot;) — highest priority
+              </li>
+              <li>
+                <strong>Group</strong> — applies to all members of the group
+              </li>
+              <li>
+                <strong>Role defaults</strong> (&quot;Role defaults&quot; tab) — baseline for admin, consultant, and
+                candidate
+              </li>
             </ul>
           </div>
           <div className="help-section">
-            <h4>Permission Types</h4>
+            <h4>What you can control</h4>
             <ul>
-              <li><strong>Tab Permissions:</strong> Control which navigation tabs users can see</li>
-              <li><strong>Job Permissions:</strong> Control who can view, create, edit, or delete jobs</li>
-              <li><strong>User Permissions:</strong> Control who can manage user accounts</li>
-              <li><strong>Candidate Permissions:</strong> Control candidate profile management</li>
+              <li>
+                <strong>Navigation (tab_*)</strong> — which sections users can access in the app (where the UI checks
+                these flags).
+              </li>
+              <li>
+                <strong>View / create / edit / delete</strong> — content actions for jobs, candidates, users, and
+                timesheets (enforced on the server for protected routes).
+              </li>
             </ul>
           </div>
         </div>

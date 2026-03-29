@@ -52,6 +52,10 @@ const Users = () => {
           is_active: true,
         });
       },
+      onError: (err) => {
+        const msg = err.response?.data?.error || err.message;
+        alert(msg || 'Could not create user');
+      },
     }
   );
 
@@ -149,10 +153,10 @@ const Users = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const submitData = { ...formData };
-    if (!editingUser || !submitData.password) {
-      delete submitData.password;
-    }
     if (editingUser) {
+      if (!submitData.password || String(submitData.password).trim() === '') {
+        delete submitData.password;
+      }
       updateMutation.mutate({ id: editingUser.id, data: submitData });
     } else {
       createMutation.mutate(submitData);
