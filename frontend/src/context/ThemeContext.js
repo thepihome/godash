@@ -88,7 +88,8 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const theme = themes[currentTheme];
     const root = document.documentElement;
-    
+    const isDarkTheme = currentTheme === 'dark';
+
     root.style.setProperty('--primary-color', theme.primary);
     root.style.setProperty('--secondary-color', theme.secondary);
     root.style.setProperty('--background-color', theme.background);
@@ -97,10 +98,34 @@ export const ThemeProvider = ({ children }) => {
     root.style.setProperty('--text-secondary-color', theme.textSecondary);
     root.style.setProperty('--border-color', theme.border);
     root.style.setProperty('--navbar-color', theme.navbar);
-    
-    document.body.style.backgroundColor = theme.background;
+
+    const mesh = isDarkTheme
+      ? `radial-gradient(ellipse 100% 70% at 20% -5%, color-mix(in srgb, ${theme.primary} 35%, transparent) 0%, transparent 55%),
+         radial-gradient(ellipse 80% 50% at 100% 100%, color-mix(in srgb, ${theme.secondary} 25%, transparent) 0%, transparent 50%),
+         linear-gradient(168deg, ${theme.background} 0%, ${theme.surface} 50%, ${theme.background} 100%)`
+      : `radial-gradient(ellipse 110% 65% at -8% -10%, color-mix(in srgb, ${theme.primary} 22%, transparent) 0%, transparent 52%),
+         radial-gradient(ellipse 90% 55% at 108% 8%, color-mix(in srgb, ${theme.secondary} 18%, transparent) 0%, transparent 48%),
+         linear-gradient(168deg, ${theme.background} 0%, #ffffff 38%, ${theme.background} 100%)`;
+
+    root.style.setProperty('--mesh-gradient', mesh);
+
+    if (isDarkTheme) {
+      root.style.setProperty('--glass-panel-bg', 'rgba(15, 23, 42, 0.58)');
+      root.style.setProperty('--glass-panel-border', 'rgba(148, 163, 184, 0.14)');
+      root.style.setProperty('--glass-sidebar-bg', 'rgba(15, 23, 42, 0.45)');
+      root.style.setProperty('--glass-filter-bg', 'rgba(30, 41, 59, 0.55)');
+      root.style.setProperty('--glass-table-header', 'rgba(30, 41, 59, 0.75)');
+    } else {
+      root.style.setProperty('--glass-panel-bg', 'rgba(255, 255, 255, 0.72)');
+      root.style.setProperty('--glass-panel-border', 'rgba(255, 255, 255, 0.88)');
+      root.style.setProperty('--glass-sidebar-bg', 'rgba(255, 255, 255, 0.78)');
+      root.style.setProperty('--glass-filter-bg', 'rgba(255, 255, 255, 0.58)');
+      root.style.setProperty('--glass-table-header', 'rgba(248, 250, 252, 0.94)');
+    }
+
+    document.body.style.background = '';
     document.body.style.color = theme.text;
-    
+
     localStorage.setItem('theme', currentTheme);
   }, [currentTheme]);
 

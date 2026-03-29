@@ -3,30 +3,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: var(--mesh-gradient);
+  background-attachment: fixed;
+  padding: 1.5rem;
 }
 
 .auth-card {
-  background: white;
-  border-radius: 8px;
-  padding: 40px;
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border-radius: var(--radius-xl);
+  padding: 2.25rem 2rem;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--glass-panel-border);
 }
 
 .auth-card h2 {
-  margin-bottom: 8px;
+  margin-bottom: 0.4rem;
   text-align: center;
-  color: #333;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .auth-subtitle {
   text-align: center;
-  color: #666;
-  margin-bottom: 24px;
+  color: var(--text-secondary-color);
+  margin-bottom: 1.5rem;
   font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .google-signin-wrapper {
@@ -41,20 +49,21 @@
 
 .auth-loading {
   text-align: center;
-  color: #666;
-  margin-top: 12px;
+  color: var(--text-secondary-color);
+  margin-top: 0.75rem;
   font-size: 0.9rem;
 }
 
 .auth-link {
   text-align: center;
-  margin-top: 20px;
-  color: #666;
+  margin-top: 1.25rem;
+  color: var(--text-secondary-color);
 }
 
 .auth-link a {
-  color: #007bff;
+  color: var(--primary-color);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .auth-link a:hover {

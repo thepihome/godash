@@ -2,6 +2,57 @@
   min-height: 100vh;
 }
 
+/* Shared glass surfaces + horizontal scroll for wide tables */
+.glass-surface {
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+}
+
+.jobs-table-container,
+.candidates-table-container,
+.users-table-container,
+.roles-table-container {
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.jobs-table-container .jobs-table,
+.candidates-table-container .candidates-table,
+.users-table-container .users-table,
+.roles-table-container .roles-table {
+  min-width: min(100%, 720px);
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.35rem;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
 /* Utility Classes */
 .container {
   max-width: 1200px;
@@ -10,12 +61,14 @@
 }
 
 .card {
-  background: var(--surface-color);
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 24px;
-  border: 1px solid var(--border-light);
+  padding: 1.35rem 1.5rem;
+  box-shadow: var(--shadow-glass);
+  margin-bottom: 1.35rem;
+  border: 1px solid var(--glass-panel-border);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -143,12 +196,12 @@
 }
 
 .table th {
-  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  background: var(--glass-table-header);
   font-weight: 600;
   color: var(--text-color);
-  font-size: 13px;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
 }
 
 .table tr:hover {

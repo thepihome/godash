@@ -123,7 +123,7 @@ const RegisterCandidates = () => {
         </div>
       </div>
 
-      <div className="candidates-table-container" style={{ overflowX: 'auto' }}>
+      <div className="candidates-table-container">
         {filteredAndSorted.length === 0 ? (
           <div className="empty-state">No records found in register_candidates</div>
         ) : (

@@ -1,18 +1,24 @@
 .dashboard {
-  max-width: 1400px;
+  max-width: 1560px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
 }
 
 .dashboard-header h1 {
-  color: #333;
+  color: var(--text-color);
   margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .kpi-grid {
@@ -23,11 +29,13 @@
 }
 
 .kpi-card {
-  background: var(--surface-color);
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  padding: 1.35rem 1.5rem;
+  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-panel-border);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;

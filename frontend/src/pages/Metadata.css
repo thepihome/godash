@@ -138,12 +138,7 @@
   border-radius: 8px;
 }
 
-.roles-table-container {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+/* Shell: glass + scroll from App.css */
 
 .roles-table {
   width: 100%;
@@ -151,15 +146,16 @@
 }
 
 .roles-table thead {
-  background-color: #f8f9fa;
+  background: var(--glass-table-header);
 }
 
 .roles-table th {
-  padding: 15px;
+  padding: 0.85rem 1rem;
   text-align: left;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #dee2e6;
+  color: var(--text-color);
+  border-bottom: 2px solid var(--border-light);
+  font-size: 0.8rem;
 }
 
 .roles-table td {

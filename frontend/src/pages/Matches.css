@@ -1,33 +1,34 @@
 .matches-page {
-  max-width: 1400px;
+  max-width: 1560px;
   margin: 0 auto;
+  width: 100%;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+.matches-page .page-header {
+  margin-bottom: 1.35rem;
 }
 
-.page-header h1 {
+.matches-page .page-header h1 {
   margin: 0;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-weight: 700;
-  font-size: 28px;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  letter-spacing: -0.03em;
 }
 
 /* Filters */
 .matches-filters {
-  background: var(--surface-color);
+  background: var(--glass-filter-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   border-radius: var(--radius-lg);
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.35rem;
+  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-panel-border);
 }
 
 .filter-row {
@@ -53,11 +54,12 @@
 
 .filter-group input,
 .filter-group select {
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  font-size: 14px;
-  background: white;
+  font-size: 0.9rem;
+  background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+  color: var(--text-color);
   transition: all 0.2s;
 }
 
@@ -70,11 +72,13 @@
 
 /* Matches Content */
 .matches-content {
-  background: var(--surface-color);
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  padding: 1.35rem 1.25rem;
+  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-panel-border);
 }
 
 /* Match Groups */
@@ -121,9 +125,11 @@
 
 /* Job Match Cards */
 .job-match-card {
-  background: white;
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-panel-border);
   overflow: hidden;
   transition: all 0.3s;
 }
@@ -170,21 +176,24 @@
 
 .job-match-candidates {
   border-top: 1px solid var(--border-light);
-  padding: 20px;
-  background: var(--background-color);
+  padding: 1rem 1rem 1.15rem;
+  background: color-mix(in srgb, var(--background-color) 55%, transparent);
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Matches Table */
 .matches-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: transparent;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  min-width: 640px;
 }
 
 .matches-table thead {
-  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  background: var(--glass-table-header);
 }
 
 .matches-table th {

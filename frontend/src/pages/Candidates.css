@@ -1,36 +1,17 @@
 .candidates-page {
-  max-width: 1400px;
+  max-width: 1560px;
   margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  gap: 20px;
-}
-
-.page-header h1 {
-  margin: 0;
-  color: #333;
+  width: 100%;
 }
 
 .page-header > div {
   display: flex;
-  gap: 10px;
+  gap: 0.65rem;
   align-items: center;
   flex-wrap: wrap;
 }
 
-/* Candidates Table */
-.candidates-table-container {
-  background: var(--surface-color);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
-}
+/* Table shell: glass + horizontal scroll from App.css */
 
 .candidates-table {
   width: 100%;
@@ -38,7 +19,7 @@
 }
 
 .candidates-table thead {
-  background: linear-gradient(to bottom, #f8fafc, #ffffff);
+  background: var(--glass-table-header);
 }
 
 .candidates-table th {

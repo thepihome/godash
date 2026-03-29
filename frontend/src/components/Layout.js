@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { FiMenu, FiX, FiHome, FiBriefcase, FiFileText, FiUsers, FiClock, FiDatabase, FiSettings, FiLogOut, FiLayers } from 'react-icons/fi';
 import './Layout.css';
@@ -50,6 +51,20 @@ const Layout = ({ children }) => {
       </nav>
 
       <div className="layout-body">
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              key="sidebar-backdrop"
+              className="sidebar-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setSidebarOpen(false)}
+              aria-hidden="true"
+            />
+          )}
+        </AnimatePresence>
         <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
           <nav className="sidebar-nav">
             {filteredMenuItems.map((item) => {
