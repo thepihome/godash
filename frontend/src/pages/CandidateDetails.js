@@ -1,10 +1,22 @@
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiEdit, FiSave, FiX, FiClock, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiUserPlus, FiUserMinus } from 'react-icons/fi';
+import { FiEdit, FiSave, FiX, FiClock, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiUserPlus, FiUserMinus, FiExternalLink, FiDatabase } from 'react-icons/fi';
 import './CandidateDetails.css';
+import './CRM.css';
+
+function crmStatusBadgeClass(status) {
+  const s = status || 'open';
+  const known = ['open', 'pending', 'scheduled', 'completed', 'cancelled'];
+  return known.includes(s) ? `crm-badge crm-badge--${s}` : 'crm-badge crm-badge--unknown';
+}
+
+function formatCrmType(t) {
+  if (!t) return 'Note';
+  return String(t).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 const CandidateDetails = () => {
   const { id } = useParams();
@@ -637,21 +649,57 @@ const CandidateDetails = () => {
         )}
       </div>
 
-      <div className="candidate-section">
-        <h2>CRM Interactions</h2>
+      <div className="candidate-section candidate-section-crm">
+        <div className="candidate-section-crm-header">
+          <h2>CRM interactions</h2>
+          {(user?.role === 'consultant' || user?.role === 'admin') && (
+            <Link to="/crm" className="btn btn-secondary candidate-crm-dashboard-link">
+              <FiDatabase /> Open CRM
+              <FiExternalLink aria-hidden />
+            </Link>
+          )}
+        </div>
+        <p className="candidate-crm-hint">
+          Summary for this candidate. Full filters, pipeline, and exports live on the{' '}
+          <Link to="/crm">CRM</Link> page.
+        </p>
         {candidate.crm_interactions && candidate.crm_interactions.length > 0 ? (
-          <div className="crm-list">
+          <div className="crm-card-grid candidate-crm-mini-grid">
             {candidate.crm_interactions.map((interaction) => (
-              <div key={interaction.id} className="crm-item">
-                <h4>{interaction.interaction_type}</h4>
-                <p>Date: {new Date(interaction.interaction_date).toLocaleDateString()}</p>
-                {interaction.notes && <p>Notes: {interaction.notes}</p>}
-                <p>Status: <span className="badge badge-info">{interaction.status}</span></p>
-              </div>
+              <article key={interaction.id} className="crm-card">
+                <div className="crm-card__top">
+                  <div className="crm-card__type">
+                    <span className="crm-type-icon" aria-hidden>
+                      <FiDatabase />
+                    </span>
+                    <div>
+                      <h3>{formatCrmType(interaction.interaction_type)}</h3>
+                      <time dateTime={String(interaction.interaction_date).slice(0, 10)}>
+                        {new Date(interaction.interaction_date).toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </time>
+                    </div>
+                  </div>
+                  <span className={crmStatusBadgeClass(interaction.status)}>
+                    {(interaction.status || 'open').replace(/^\w/, (c) => c.toUpperCase())}
+                  </span>
+                </div>
+                {interaction.notes && <p className="crm-card__notes crm-card__notes--full">{interaction.notes}</p>}
+                {interaction.follow_up_date && (
+                  <p className="crm-follow-tag">
+                    <FiClock aria-hidden />
+                    Follow-up: {new Date(interaction.follow_up_date).toLocaleDateString()}
+                  </p>
+                )}
+              </article>
             ))}
           </div>
         ) : (
-          <p>No CRM interactions</p>
+          <p className="candidate-crm-empty">No CRM interactions for this candidate yet.</p>
         )}
       </div>
 

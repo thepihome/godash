@@ -528,6 +528,33 @@
   line-height: 1.55;
 }
 
+.permissions-seed-missing {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.permissions-seed-missing pre.permissions-cli-hint {
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.85rem;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.permissions-seed-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(51, 51, 51, 0.8);
+}
+
 .permission-type-selector {
   flex-wrap: wrap;
 }

@@ -1,6 +1,414 @@
-.timesheets-page {
-  max-width: 1400px;
-  margin: 0 auto;
+/* Timesheets: card grid + stats (uses .list-page / .list-filters-panel from App.css) */
+
+.timesheets-page.timesheets-page {
+  max-width: 1560px;
 }
 
+.timesheets-filters .filter-group--wide {
+  max-width: min(100%, 440px);
+  flex: 1 1 240px;
+}
 
+/* Summary strip */
+.timesheets-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.timesheets-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-lg);
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+
+.timesheets-stat-card--hours {
+  border-color: color-mix(in srgb, var(--primary-color) 35%, var(--glass-panel-border));
+}
+
+.timesheets-stat-card--pending {
+  border-color: color-mix(in srgb, #f59e0b 40%, var(--glass-panel-border));
+}
+
+.timesheets-stat-icon {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  opacity: 0.75;
+  color: var(--primary-color);
+}
+
+.timesheets-stat-card--pending .timesheets-stat-icon {
+  color: #f59e0b;
+}
+
+.timesheets-stat-value {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text-color);
+}
+
+.timesheets-stat-label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary-color);
+  margin-top: 0.15rem;
+}
+
+/* Card grid */
+.timesheets-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.timesheet-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 0 0.85rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--shadow-glass);
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.timesheet-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--primary-color) 22%, var(--glass-panel-border));
+}
+
+.timesheet-card__date-block {
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 3.25rem;
+  padding: 0.5rem 0.45rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--primary-color) 18%, transparent),
+    color-mix(in srgb, var(--primary-color) 6%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--primary-color) 28%, transparent);
+  text-align: center;
+}
+
+.timesheet-card__dow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary-color);
+}
+
+.timesheet-card__day {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height:1;
+  letter-spacing: -0.04em;
+  color: var(--text-color);
+  margin: 0.2rem 0;
+}
+
+.timesheet-card__mon {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary-color);
+  line-height: 1.2;
+}
+
+.timesheet-card__main {
+  min-width: 0;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.timesheet-card__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.timesheet-card__hours-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--text-color);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+}
+
+.timesheet-card__hours-pill svg {
+  opacity: 0.85;
+}
+
+.timesheet-card__status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.timesheet-card__status--draft {
+  background: color-mix(in srgb, var(--text-secondary-color) 15%, transparent);
+  color: var(--text-secondary-color);
+}
+
+.timesheet-card__status--submitted {
+  background: color-mix(in srgb, #f59e0b 22%, transparent);
+  color: #b45309;
+}
+
+.timesheet-card__status--approved {
+  background: color-mix(in srgb, #22c55e 22%, transparent);
+  color: #15803d;
+}
+
+.timesheet-card__status--rejected {
+  background: color-mix(in srgb, #ef4444 20%, transparent);
+  color: #b91c1c;
+}
+
+.timesheet-card__description {
+  margin: 0 0 0.55rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-color);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.timesheet-card__muted {
+  color: var(--text-secondary-color);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.timesheet-card__chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.timesheet-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-secondary-color);
+  min-width: 0;
+}
+
+.timesheet-chip svg {
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+  opacity: 0.65;
+}
+
+.timesheet-chip--user .timesheet-chip__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.timesheet-chip--user strong {
+  font-weight: 600;
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+.timesheet-chip__sub {
+  font-size: 0.72rem;
+  opacity: 0.9;
+  word-break: break-all;
+}
+
+.timesheet-card__actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+}
+
+.timesheet-card__btn {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+}
+
+.timesheet-card__btn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+/* Empty state */
+.timesheets-empty {
+  text-align: center;
+  padding: 2.5rem 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px dashed color-mix(in srgb, var(--border-color) 85%, transparent);
+  color: var(--text-secondary-color);
+}
+
+.timesheets-empty p {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.timesheets-empty-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0 auto 0.85rem;
+  opacity: 0.45;
+  color: var(--primary-color);
+}
+
+/* Modal (page-local; matches Dashboard modal pattern) */
+.timesheets-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.timesheets-page .modal-content.timesheet-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.65rem;
+  border-radius: var(--radius-xl);
+  background: var(--surface-color);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-xl);
+}
+
+.timesheet-modal__hint {
+  margin: -0.35rem 0 1.15rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-secondary-color);
+}
+
+.timesheets-page .modal-content.timesheet-modal h2 {
+  margin: 0 0 0.35rem;
+}
+
+.timesheets-page .modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.timesheets-page .form-group {
+  margin-bottom: 0.9rem;
+}
+
+.timesheets-page .form-group label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary-color);
+  margin-bottom: 0.3rem;
+}
+
+.timesheets-page .form-group input,
+.timesheets-page .form-group select,
+.timesheets-page .form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-color) 96%, transparent);
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
+.timesheets-page .form-group textarea {
+  resize: vertical;
+  min-height: 88px;
+  line-height: 1.45;
+}
+
+@media (max-width: 520px) {
+  .timesheet-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .timesheet-card__date-block {
+    grid-row: auto;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.65rem;
+    min-width: unset;
+  }
+
+  .timesheet-card__main {
+    grid-column: 1;
+  }
+
+  .timesheet-card__actions {
+    grid-column: 1;
+    justify-content: stretch;
+  }
+
+  .timesheet-card__btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

@@ -1278,10 +1278,12 @@ const PermissionsManagement = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [permissionType, setPermissionType] = useState('user');
 
-  const { data: permissions, isLoading: loadingPermissions } = useQuery(
-    'permissions',
-    () => api.get('/permissions').then(res => res.data)
-  );
+  const {
+    data: permissions,
+    isLoading: loadingPermissions,
+    isError: permissionsQueryError,
+    error: permissionsQueryErr,
+  } = useQuery('permissions', () => api.get('/permissions').then(res => res.data));
 
   const { data: users } = useQuery(
     'users',
@@ -1293,7 +1295,11 @@ const PermissionsManagement = () => {
     () => api.get('/groups').then(res => res.data)
   );
 
-  const { data: userPermsData, isLoading: loadingUserPerms } = useQuery(
+  const {
+    data: userPermsData,
+    isLoading: loadingUserPerms,
+    isError: userPermsError,
+  } = useQuery(
     ['user-permissions', selectedUser?.id],
     () => api.get(`/permissions/user/${selectedUser.id}`).then(res => res.data),
     {
@@ -1309,7 +1315,11 @@ const PermissionsManagement = () => {
     }
   );
 
-  const { data: groupPermsData } = useQuery(
+  const {
+    data: groupPermsData,
+    isLoading: loadingGroupPerms,
+    isError: groupPermsError,
+  } = useQuery(
     ['group-permissions', selectedGroup?.id],
     () => api.get(`/permissions/group/${selectedGroup.id}`).then(res => res.data),
     {
@@ -1317,7 +1327,7 @@ const PermissionsManagement = () => {
     }
   );
 
-  const { data: rolePermsData } = useQuery(
+  const { data: rolePermsData, isLoading: loadingRolePerms } = useQuery(
     ['role-permissions', selectedRole],
     () => api.get(`/permissions/role/${selectedRole}`).then(res => res.data),
     {
@@ -1410,7 +1420,7 @@ const PermissionsManagement = () => {
       return perms;
     }
 
-    if (permissionType === 'group' && groupPermsData) {
+    if (permissionType === 'group' && selectedGroup && Array.isArray(groupPermsData)) {
       const perms = {};
       groupPermsData.forEach(p => {
         perms[p.id] = { ...p, effective: p.granted !== false, source: 'group' };
@@ -1423,7 +1433,7 @@ const PermissionsManagement = () => {
       return perms;
     }
 
-    if (permissionType === 'role' && rolePermsData) {
+    if (permissionType === 'role' && selectedRole && Array.isArray(rolePermsData)) {
       const grantedIds = new Set(rolePermsData.map(p => p.id));
       const perms = {};
       permissions.forEach(perm => {
@@ -1476,10 +1486,13 @@ const PermissionsManagement = () => {
     setSelectedRole('');
   };
 
+  const hasPermissionCatalog = permissions && permissions.length > 0;
+
   const editorActive =
-    (permissionType === 'user' && selectedUser && userPermsData) ||
-    (permissionType === 'group' && selectedGroup) ||
-    (permissionType === 'role' && selectedRole);
+    hasPermissionCatalog &&
+    ((permissionType === 'user' && selectedUser && userPermsData && !userPermsError) ||
+      (permissionType === 'group' && selectedGroup && !loadingGroupPerms && !groupPermsError) ||
+      (permissionType === 'role' && selectedRole && !loadingRolePerms));
 
   return (
     <div className="settings-section">
@@ -1574,10 +1587,38 @@ const PermissionsManagement = () => {
           )}
         </div>
 
-        {loadingPermissions ? (
+        {permissionsQueryError ? (
+          <div className="error">
+            Could not load permission definitions:{' '}
+            {permissionsQueryErr?.response?.data?.error || permissionsQueryErr?.message || 'Request failed'}
+          </div>
+        ) : loadingPermissions ? (
           <div className="loading">Loading permissions...</div>
+        ) : !hasPermissionCatalog ? (
+          <div className="permissions-seed-missing">
+            <p>
+              <strong>No permission definitions in the database.</strong> The catalog is empty, so there is nothing to
+              assign to users or groups.
+            </p>
+            <p>
+              For Cloudflare D1, run the seed migration once (from the <code>backend</code> folder), replacing{' '}
+              <code>YOUR_DB_NAME</code> with your D1 database name from <code>wrangler.toml</code>:
+            </p>
+            <pre className="permissions-cli-hint">
+              npx wrangler d1 execute YOUR_DB_NAME --remote --file=./database/migrations/seed_permissions_d1.sql
+            </pre>
+            <p className="permissions-seed-note">Use <code>--local</code> instead of <code>--remote</code> for local dev.</p>
+          </div>
         ) : permissionType === 'user' && selectedUser && loadingUserPerms ? (
           <div className="loading">Loading user permissions...</div>
+        ) : permissionType === 'user' && selectedUser && userPermsError ? (
+          <div className="error">Could not load effective permissions for this user.</div>
+        ) : permissionType === 'group' && selectedGroup && loadingGroupPerms ? (
+          <div className="loading">Loading group permissions...</div>
+        ) : permissionType === 'group' && selectedGroup && groupPermsError ? (
+          <div className="error">Could not load permissions for this group.</div>
+        ) : permissionType === 'role' && selectedRole && loadingRolePerms ? (
+          <div className="loading">Loading role permissions...</div>
         ) : editorActive ? (
           <div className="permissions-editor">
             <div className="permissions-info-header">

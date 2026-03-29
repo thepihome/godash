@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { FiMenu, FiX, FiHome, FiBriefcase, FiFileText, FiUsers, FiClock, FiDatabase, FiSettings, FiLogOut, FiLayers } from 'react-icons/fi';
+import { APP_UI_VERSION } from '../version';
 import './Layout.css';
 
 const Layout = ({ children }) => {
@@ -89,6 +90,13 @@ const Layout = ({ children }) => {
 
         <main className="main-content">
           {children}
+          <div
+            className="layout-build-stamp"
+            title="If this version does not change after deploy, the browser or CDN is still serving an old index.html or bundle."
+          >
+            UI {APP_UI_VERSION}
+            {process.env.REACT_APP_BUILD_REF ? ` · ${process.env.REACT_APP_BUILD_REF}` : ''}
+          </div>
         </main>
       </div>
     </div>

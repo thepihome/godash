@@ -1,15 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiCheck, FiX } from 'react-icons/fi';
-import { useResizableColumns } from '../hooks/useResizableColumns';
+import {
+  FiPlus,
+  FiCheck,
+  FiX,
+  FiEdit2,
+  FiFilter,
+  FiCalendar,
+  FiClock,
+  FiUser,
+  FiBriefcase,
+  FiFileText,
+} from 'react-icons/fi';
 import './Timesheets.css';
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'All statuses' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+];
+
+function formatConsultant(ts) {
+  const name = [ts.user_first_name, ts.user_last_name].filter(Boolean).join(' ').trim();
+  if (name) return name;
+  return ts.user_email || '—';
+}
+
+function parseDateParts(iso) {
+  if (!iso) return { dow: '', day: '', mon: '' };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { dow: '', day: '', mon: '' };
+  return {
+    dow: d.toLocaleDateString(undefined, { weekday: 'short' }),
+    day: String(d.getDate()),
+    mon: d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
+  };
+}
 
 const Timesheets = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const [editingTimesheet, setEditingTimesheet] = useState(null);
+  const [showFilters, setShowFilters] = useState(true);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [search, setSearch] = useState('');
   const [formData, setFormData] = useState({
     candidate_id: '',
     job_id: '',
@@ -18,229 +57,469 @@ const Timesheets = () => {
     description: '',
   });
 
+  const canCreate = user?.role === 'consultant' || user?.role === 'admin';
+
   const { data: timesheets, isLoading } = useQuery(
     'timesheets',
     () => api.get('/timesheets').then(res => res.data)
   );
 
   const { data: candidates } = useQuery(
-    'assigned-candidates',
-    () => api.get('/candidates/assigned').then(res => res.data),
-    { enabled: user?.role === 'consultant' }
+    ['timesheet-candidates', user?.role],
+    () =>
+      user?.role === 'admin'
+        ? api.get('/candidates').then(res => res.data)
+        : api.get('/candidates/assigned').then(res => res.data),
+    { enabled: !!user && (user?.role === 'consultant' || user?.role === 'admin') }
   );
 
   const { data: jobs } = useQuery(
     'jobs',
     () => api.get('/jobs').then(res => res.data),
-    { enabled: user?.role === 'consultant' }
+    { enabled: !!user && (user?.role === 'consultant' || user?.role === 'admin') }
   );
 
-  const createMutation = useMutation(
-    (data) => api.post('/timesheets', data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('timesheets');
-        setShowModal(false);
-        setFormData({
-          candidate_id: '',
-          job_id: '',
-          date: new Date().toISOString().split('T')[0],
-          hours: '',
-          description: '',
-        });
-      },
-    }
-  );
+  const filteredTimesheets = useMemo(() => {
+    if (!timesheets?.length) return [];
+    return timesheets.filter((ts) => {
+      if (filterStatus && ts.status !== filterStatus) return false;
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      const blob = [
+        ts.description,
+        ts.candidate_first_name,
+        ts.candidate_last_name,
+        ts.candidate_email,
+        ts.job_title,
+        ts.job_company,
+        ts.user_email,
+        ts.user_first_name,
+        ts.user_last_name,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return blob.includes(q);
+    });
+  }, [timesheets, filterStatus, search]);
 
-  const submitMutation = useMutation(
-    (id) => api.post(`/timesheets/${id}/submit`),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('timesheets');
-      },
-    }
-  );
+  const stats = useMemo(() => {
+    const list = filteredTimesheets;
+    const hours = list.reduce((s, t) => s + (parseFloat(t.hours) || 0), 0);
+    const pending = list.filter((t) => t.status === 'submitted').length;
+    const drafts = list.filter((t) => t.status === 'draft').length;
+    return { count: list.length, hours, pending, drafts };
+  }, [filteredTimesheets]);
+
+  const createMutation = useMutation((data) => api.post('/timesheets', data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('timesheets');
+      closeModal();
+    },
+    onError: (e) => alert(e.response?.data?.error || e.message),
+  });
+
+  const updateMutation = useMutation(({ id, data }) => api.put(`/timesheets/${id}`, data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('timesheets');
+      closeModal();
+    },
+    onError: (e) => alert(e.response?.data?.error || e.message),
+  });
+
+  const submitMutation = useMutation((id) => api.post(`/timesheets/${id}/submit`), {
+    onSuccess: () => queryClient.invalidateQueries('timesheets'),
+    onError: (e) => alert(e.response?.data?.error || e.message),
+  });
 
   const approveMutation = useMutation(
     ({ id, action }) => api.post(`/timesheets/${id}/approve`, { action }),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries('timesheets');
-      },
+      onSuccess: () => queryClient.invalidateQueries('timesheets'),
+      onError: (e) => alert(e.response?.data?.error || e.message),
     }
   );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    createMutation.mutate(formData);
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingTimesheet(null);
+    setFormData({
+      candidate_id: '',
+      job_id: '',
+      date: new Date().toISOString().split('T')[0],
+      hours: '',
+      description: '',
+    });
   };
 
-  // Resizable columns hook (8 columns for admin, 7 for consultant: Date, Hours, Description, User (admin only), Candidate, Job, Status, Actions)
-  const initialWidths = user?.role === 'admin' 
-    ? [120, 80, 300, 150, 150, 150, 100, 120] 
-    : [120, 80, 300, 150, 150, 100, 120];
-  const { getColumnProps, ResizeHandle, tableRef } = useResizableColumns(
-    initialWidths,
-    `timesheets-column-widths-${user?.role || 'default'}`
-  );
+  const openCreate = () => {
+    setEditingTimesheet(null);
+    setFormData({
+      candidate_id: '',
+      job_id: '',
+      date: new Date().toISOString().split('T')[0],
+      hours: '',
+      description: '',
+    });
+    setShowModal(true);
+  };
+
+  const openEdit = (ts) => {
+    const d = ts.date ? String(ts.date).slice(0, 10) : new Date().toISOString().split('T')[0];
+    setEditingTimesheet(ts);
+    setFormData({
+      candidate_id: ts.candidate_id != null ? String(ts.candidate_id) : '',
+      job_id: ts.job_id != null ? String(ts.job_id) : '',
+      date: d,
+      hours: ts.hours != null ? String(ts.hours) : '',
+      description: ts.description || '',
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      candidate_id: formData.candidate_id ? parseInt(formData.candidate_id, 10) : null,
+      job_id: formData.job_id ? parseInt(formData.job_id, 10) : null,
+      date: formData.date,
+      hours: formData.hours,
+      description: formData.description || null,
+    };
+    if (editingTimesheet) {
+      updateMutation.mutate({ id: editingTimesheet.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
+  };
+
+  const hasActiveFilters = Boolean(filterStatus || search.trim());
 
   if (isLoading) {
     return <div className="loading">Loading timesheets...</div>;
   }
 
   return (
-    <div className="timesheets-page">
+    <div className="timesheets-page list-page">
       <div className="page-header">
         <h1>Timesheets</h1>
-        {user?.role === 'consultant' && (
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-            <FiPlus /> New Timesheet
+        <div className="list-page-header-actions">
+          <button type="button" className="btn btn-secondary" onClick={() => setShowFilters(!showFilters)}>
+            <FiFilter /> {showFilters ? 'Hide' : 'Show'} filters
           </button>
-        )}
+          {canCreate && (
+            <button type="button" className="btn btn-primary" onClick={openCreate}>
+              <FiPlus /> Log time
+            </button>
+          )}
+        </div>
       </div>
 
-      <table ref={tableRef} className="table" style={{ tableLayout: 'fixed', width: '100%' }}>
-        <thead>
-          <tr>
-            <th {...getColumnProps(0)}>Date<ResizeHandle index={0} /></th>
-            <th {...getColumnProps(1)}>Hours<ResizeHandle index={1} /></th>
-            <th {...getColumnProps(2)}>Description<ResizeHandle index={2} /></th>
-            {user?.role === 'admin' && <th {...getColumnProps(3)}>User<ResizeHandle index={3} /></th>}
-            <th {...getColumnProps(user?.role === 'admin' ? 4 : 3)}>Candidate<ResizeHandle index={user?.role === 'admin' ? 4 : 3} /></th>
-            <th {...getColumnProps(user?.role === 'admin' ? 5 : 4)}>Job<ResizeHandle index={user?.role === 'admin' ? 5 : 4} /></th>
-            <th {...getColumnProps(user?.role === 'admin' ? 6 : 5)}>Status<ResizeHandle index={user?.role === 'admin' ? 6 : 5} /></th>
-            <th {...getColumnProps(user?.role === 'admin' ? 7 : 6)}>Actions<ResizeHandle index={user?.role === 'admin' ? 7 : 6} /></th>
-          </tr>
-        </thead>
-        <tbody>
-          {timesheets && timesheets.length > 0 ? (
-            timesheets.map((timesheet) => (
-              <tr key={timesheet.id}>
-                <td>{new Date(timesheet.date).toLocaleDateString()}</td>
-                <td>{timesheet.hours}</td>
-                <td>{timesheet.description}</td>
-                {user?.role === 'admin' && (
-                  <td>{timesheet.user_email}</td>
-                )}
-                <td>
-                  {timesheet.candidate_first_name && timesheet.candidate_last_name
-                    ? `${timesheet.candidate_first_name} ${timesheet.candidate_last_name}`
-                    : 'N/A'}
-                </td>
-                <td>{timesheet.job_title || 'N/A'}</td>
-                <td>
-                  <span className={`badge badge-${timesheet.status === 'approved' ? 'success' : timesheet.status === 'rejected' ? 'danger' : 'warning'}`}>
-                    {timesheet.status}
-                  </span>
-                </td>
-                <td>
-                  {user?.role === 'consultant' && timesheet.status === 'draft' && (
-                    <button
-                      onClick={() => submitMutation.mutate(timesheet.id)}
-                      className="btn btn-success btn-sm"
+      <div className="timesheets-stats">
+        <div className="timesheets-stat-card">
+          <FiFileText className="timesheets-stat-icon" aria-hidden />
+          <div>
+            <span className="timesheets-stat-value">{stats.count}</span>
+            <span className="timesheets-stat-label">Entries (filtered)</span>
+          </div>
+        </div>
+        <div className="timesheets-stat-card timesheets-stat-card--hours">
+          <FiClock className="timesheets-stat-icon" aria-hidden />
+          <div>
+            <span className="timesheets-stat-value">{stats.hours.toFixed(1)}</span>
+            <span className="timesheets-stat-label">Hours total</span>
+          </div>
+        </div>
+        <div className="timesheets-stat-card timesheets-stat-card--pending">
+          <FiCalendar className="timesheets-stat-icon" aria-hidden />
+          <div>
+            <span className="timesheets-stat-value">{stats.pending}</span>
+            <span className="timesheets-stat-label">Awaiting approval</span>
+          </div>
+        </div>
+        <div className="timesheets-stat-card">
+          <FiEdit2 className="timesheets-stat-icon" aria-hidden />
+          <div>
+            <span className="timesheets-stat-value">{stats.drafts}</span>
+            <span className="timesheets-stat-label">Drafts</span>
+          </div>
+        </div>
+      </div>
+
+      {showFilters && (
+        <div className="list-filters-panel timesheets-filters">
+          <div className="filter-row">
+            <div className="filter-group filter-group--wide">
+              <label htmlFor="ts-filter-search">Search</label>
+              <input
+                id="ts-filter-search"
+                type="text"
+                placeholder="Description, candidate, job, consultant…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label htmlFor="ts-filter-status">Status</label>
+              <select
+                id="ts-filter-status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((o) => (
+                  <option key={o.value || 'all'} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setFilterStatus('');
+                  setSearch('');
+                }}
+              >
+                <FiX /> Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {filteredTimesheets.length === 0 ? (
+        <div className="timesheets-empty">
+          <FiCalendar className="timesheets-empty-icon" aria-hidden />
+          {timesheets?.length > 0 ? (
+            <>
+              <p>No timesheets match your filters.</p>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setFilterStatus('');
+                    setSearch('');
+                  }}
+                >
+                  <FiX /> Clear filters
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <p>No timesheets yet.</p>
+              {canCreate && (
+                <button type="button" className="btn btn-primary" onClick={openCreate}>
+                  <FiPlus /> Log your first entry
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="timesheets-card-grid">
+          {filteredTimesheets.map((ts) => {
+            const { dow, day, mon } = parseDateParts(ts.date);
+            const consultantName = formatConsultant(ts);
+            const candidateLabel =
+              ts.candidate_first_name || ts.candidate_last_name
+                ? `${ts.candidate_first_name || ''} ${ts.candidate_last_name || ''}`.trim()
+                : null;
+            const jobLabel = ts.job_title ? `${ts.job_title}${ts.job_company ? ` · ${ts.job_company}` : ''}` : null;
+
+            return (
+              <article key={ts.id} className="timesheet-card">
+                <div className="timesheet-card__date-block">
+                  <span className="timesheet-card__dow">{dow}</span>
+                  <span className="timesheet-card__day">{day}</span>
+                  <span className="timesheet-card__mon">{mon}</span>
+                </div>
+                <div className="timesheet-card__main">
+                  <div className="timesheet-card__top">
+                    <span className="timesheet-card__hours-pill">
+                      <FiClock aria-hidden />
+                      {ts.hours}h
+                    </span>
+                    <span
+                      className={`timesheet-card__status timesheet-card__status--${ts.status || 'draft'}`}
                     >
-                      <FiCheck /> Submit
-                    </button>
-                  )}
-                  {user?.role === 'admin' && timesheet.status === 'submitted' && (
+                      {(ts.status || 'draft').replace(/^\w/, (c) => c.toUpperCase())}
+                    </span>
+                  </div>
+                  <p className="timesheet-card__description">
+                    {ts.description || <em className="timesheet-card__muted">No description</em>}
+                  </p>
+                  <div className="timesheet-card__chips">
+                    {user?.role === 'admin' && (
+                      <span className="timesheet-chip timesheet-chip--user">
+                        <FiUser aria-hidden />
+                        <span className="timesheet-chip__text">
+                          <strong>{consultantName}</strong>
+                          {ts.user_email && (
+                            <span className="timesheet-chip__sub">{ts.user_email}</span>
+                          )}
+                        </span>
+                      </span>
+                    )}
+                    {candidateLabel && (
+                      <span className="timesheet-chip">
+                        <FiUser aria-hidden />
+                        {candidateLabel}
+                      </span>
+                    )}
+                    {jobLabel && (
+                      <span className="timesheet-chip">
+                        <FiBriefcase aria-hidden />
+                        {jobLabel}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="timesheet-card__actions">
+                  {ts.status === 'draft' && (user?.role === 'consultant' || user?.role === 'admin') && (
                     <>
                       <button
-                        onClick={() => approveMutation.mutate({ id: timesheet.id, action: 'approve' })}
-                        className="btn btn-success btn-sm"
+                        type="button"
+                        className="btn btn-secondary timesheet-card__btn"
+                        onClick={() => openEdit(ts)}
+                      >
+                        <FiEdit2 /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-success timesheet-card__btn"
+                        onClick={() => submitMutation.mutate(ts.id)}
+                        disabled={submitMutation.isLoading}
+                      >
+                        <FiCheck /> Submit
+                      </button>
+                    </>
+                  )}
+                  {user?.role === 'admin' && ts.status === 'submitted' && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-success timesheet-card__btn"
+                        onClick={() => approveMutation.mutate({ id: ts.id, action: 'approve' })}
+                        disabled={approveMutation.isLoading}
                       >
                         <FiCheck /> Approve
                       </button>
                       <button
-                        onClick={() => approveMutation.mutate({ id: timesheet.id, action: 'reject' })}
-                        className="btn btn-danger btn-sm"
+                        type="button"
+                        className="btn btn-danger timesheet-card__btn"
+                        onClick={() => approveMutation.mutate({ id: ts.id, action: 'reject' })}
+                        disabled={approveMutation.isLoading}
                       >
                         <FiX /> Reject
                       </button>
                     </>
                   )}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="8" className="empty-state">No timesheets found</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>New Timesheet</h2>
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content timesheet-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>{editingTimesheet ? 'Edit timesheet' : 'Log time'}</h2>
+            <p className="timesheet-modal__hint">
+              {editingTimesheet
+                ? 'Only draft entries can be edited. Submit when ready for approval.'
+                : 'Add hours against a candidate and/or job. Submit when you are ready.'}
+            </p>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Date</label>
+                <label htmlFor="ts-date">Date</label>
                 <input
+                  id="ts-date"
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   required
+                  disabled={editingTimesheet && editingTimesheet.status !== 'draft'}
                 />
               </div>
               <div className="form-group">
-                <label>Hours</label>
+                <label htmlFor="ts-hours">Hours</label>
                 <input
+                  id="ts-hours"
                   type="number"
                   step="0.5"
                   min="0"
                   value={formData.hours}
                   onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
                   required
+                  disabled={editingTimesheet && editingTimesheet.status !== 'draft'}
                 />
               </div>
               <div className="form-group">
-                <label>Candidate (Optional)</label>
+                <label htmlFor="ts-candidate">Candidate (optional)</label>
                 <select
+                  id="ts-candidate"
                   value={formData.candidate_id}
                   onChange={(e) => setFormData({ ...formData, candidate_id: e.target.value })}
+                  disabled={editingTimesheet && editingTimesheet.status !== 'draft'}
                 >
-                  <option value="">Select candidate</option>
-                  {candidates?.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.first_name} {candidate.last_name}
+                  <option value="">— Select candidate —</option>
+                  {candidates?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.first_name} {c.last_name}
+                      {c.email ? ` (${c.email})` : ''}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Job (Optional)</label>
+                <label htmlFor="ts-job">Job (optional)</label>
                 <select
+                  id="ts-job"
                   value={formData.job_id}
                   onChange={(e) => setFormData({ ...formData, job_id: e.target.value })}
+                  disabled={editingTimesheet && editingTimesheet.status !== 'draft'}
                 >
-                  <option value="">Select job</option>
+                  <option value="">— Select job —</option>
                   {jobs?.map((job) => (
                     <option key={job.id} value={job.id}>
-                      {job.title} - {job.company}
+                      {job.title} — {job.company}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label htmlFor="ts-desc">Description</label>
                 <textarea
+                  id="ts-desc"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   required
+                  rows={4}
+                  disabled={editingTimesheet && editingTimesheet.status !== 'draft'}
                 />
               </div>
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowModal(false)}
-                >
+                <button type="button" className="btn btn-secondary" onClick={closeModal}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={createMutation.isLoading}>
-                  {createMutation.isLoading ? 'Creating...' : 'Create'}
-                </button>
+                {(!editingTimesheet || editingTimesheet.status === 'draft') && (
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={createMutation.isLoading || updateMutation.isLoading}
+                  >
+                    {createMutation.isLoading || updateMutation.isLoading
+                      ? 'Saving…'
+                      : editingTimesheet
+                        ? 'Save changes'
+                        : 'Create'}
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -251,5 +530,3 @@ const Timesheets = () => {
 };
 
 export default Timesheets;
-
-

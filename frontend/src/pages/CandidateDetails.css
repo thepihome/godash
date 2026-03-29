@@ -439,3 +439,49 @@
   font-weight: 500;
 }
 
+/* CRM block on candidate profile (shares .crm-card styles from CRM.css) */
+.candidate-section-crm-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.candidate-section-crm-header h2 {
+  margin-bottom: 0;
+}
+
+.candidate-crm-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+}
+
+.candidate-crm-hint {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0 0 1rem;
+  line-height: 1.45;
+}
+
+.candidate-crm-hint a {
+  font-weight: 600;
+  color: var(--primary-color, #2563eb);
+}
+
+.candidate-crm-mini-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.candidate-crm-mini-grid .crm-card__notes {
+  margin-bottom: 0.65rem;
+}
+
+.candidate-crm-empty {
+  margin: 0;
+  color: #666;
+}
+
