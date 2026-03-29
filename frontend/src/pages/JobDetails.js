@@ -51,19 +51,21 @@ const JobDetails = () => {
   }
 
   return (
-    <div className="job-details">
-      <button onClick={() => navigate('/jobs')} className="btn btn-secondary">
-        ← Back to Jobs
-      </button>
+    <div className="job-details list-page">
+      <div className="job-details-toolbar">
+        <button type="button" onClick={() => navigate('/jobs')} className="btn btn-secondary">
+          ← Back to jobs
+        </button>
+      </div>
 
       <div className="job-details-card">
         <div className="job-details-header">
           <h1>{job.title}</h1>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="list-page-header-actions">
             {user?.role === 'candidate' && job.match_score != null && (
               <span className="badge badge-info">Match {Math.round(Number(job.match_score))}%</span>
             )}
-            <span className={`badge badge-${job.status === 'active' ? 'success' : 'warning'}`}>
+            <span className={`badge badge-${job.status === 'active' ? 'success' : job.status === 'closed' ? 'warning' : job.status === 'draft' ? 'info' : 'danger'}`}>
               {job.status}
             </span>
           </div>
@@ -130,7 +132,7 @@ const JobDetails = () => {
               rel="noopener noreferrer"
               className="btn btn-primary external-apply-btn"
             >
-              <FiExternalLink /> Apply Externally
+              <FiExternalLink /> Apply externally
             </a>
             <p className="external-link-hint">This will open the company's application page in a new tab.</p>
           </div>
@@ -138,27 +140,33 @@ const JobDetails = () => {
 
         {user?.role === 'candidate' && resumes && resumes.length > 0 && (
           <div className="job-section">
-            <h2>Match Your Resume</h2>
-            <div className="match-resume">
-              <select
-                value={selectedResume}
-                onChange={(e) => setSelectedResume(e.target.value)}
-                className="form-group"
-              >
-                <option value="">Select a resume</option>
-                {resumes.map((resume) => (
-                  <option key={resume.id} value={resume.id}>
-                    {resume.file_name || `Resume ${resume.id}`}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={handleMatch}
-                className="btn btn-primary"
-                disabled={matchMutation.isLoading}
-              >
-                {matchMutation.isLoading ? 'Matching...' : 'Match Resume'}
-              </button>
+            <h2>Match your resume</h2>
+            <div className="match-resume-panel">
+              <div className="match-resume">
+                <div className="match-resume-select-wrap">
+                  <label htmlFor="job-detail-resume">Resume</label>
+                  <select
+                    id="job-detail-resume"
+                    value={selectedResume}
+                    onChange={(e) => setSelectedResume(e.target.value)}
+                  >
+                    <option value="">Select a resume</option>
+                    {resumes.map((resume) => (
+                      <option key={resume.id} value={resume.id}>
+                        {resume.file_name || `Resume ${resume.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleMatch}
+                  className="btn btn-primary"
+                  disabled={matchMutation.isLoading}
+                >
+                  {matchMutation.isLoading ? 'Matching…' : 'Match resume'}
+                </button>
+              </div>
             </div>
           </div>
         )}

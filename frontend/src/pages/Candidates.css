@@ -1,8 +1,4 @@
-.candidates-page {
-  max-width: 1560px;
-  margin: 0 auto;
-  width: 100%;
-}
+/* width via .list-page */
 
 .page-header > div {
   display: flex;
@@ -315,21 +311,35 @@
   margin-bottom: 0;
 }
 
-/* Compact Inline Filter Bar */
-.compact-filters-bar {
-  background: var(--surface-color);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+/* Compact filters: only used inside .list-filters-panel */
+.compact-filters-bar.list-filters-panel {
+  padding: 0.55rem 0.75rem;
 }
 
 .compact-filters-content {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem 0.65rem;
+  align-items: flex-end;
+}
+
+.compact-filter-row--empty {
+  flex: 1 1 100%;
+  flex-wrap: wrap;
   align-items: center;
+}
+
+.compact-filters-empty-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary-color);
+  font-weight: 500;
+  margin-right: 0.35rem;
+}
+
+.compact-filter-quick {
+  min-width: 140px;
+  max-width: min(100%, 240px);
+  flex: 1 1 180px;
 }
 
 .compact-filter-conditions {
@@ -342,24 +352,27 @@
 
 .compact-filter-row {
   display: flex;
-  gap: 8px;
+  gap: 0.45rem;
   align-items: center;
-  background: #f8f9fa;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #dee2e6;
+  background: color-mix(in srgb, var(--surface-color) 70%, transparent);
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
 }
 
 .compact-filter-field,
 .compact-filter-operator,
 .compact-filter-value {
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
   font-family: inherit;
-  background: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  color: var(--text-color);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .compact-filter-field {
@@ -380,8 +393,8 @@
 .compact-filter-operator:focus,
 .compact-filter-value:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 18%, transparent);
 }
 
 .compact-filter-remove {
@@ -437,12 +450,14 @@
 }
 
 .compact-filters-info {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #e0e0e0;
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--border-light);
+  font-size: 0.72rem;
+  color: var(--text-secondary-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* Legacy Filter Panel (kept for backward compatibility) */

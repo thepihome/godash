@@ -199,32 +199,27 @@ const Matches = () => {
   }
 
   return (
-    <div className="matches-page">
+    <div className="matches-page list-page">
       <div className="page-header">
-      <h1>Job Matches</h1>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <h1>Job Matches</h1>
+        <div className="list-page-header-actions">
           <button
+            type="button"
             className="btn btn-secondary"
             onClick={() => setShowFilters(!showFilters)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <FiFilter /> {showFilters ? 'Hide' : 'Show'} Filters
+            <FiFilter /> {showFilters ? 'Hide' : 'Show'} filters
           </button>
           {user?.role !== 'candidate' && (
-            <button
-              className="btn btn-primary"
-              onClick={() => refetchMatches()}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <FiRefreshCw /> Refresh Matches
+            <button type="button" className="btn btn-primary" onClick={() => refetchMatches()}>
+              <FiRefreshCw /> Refresh matches
             </button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
       {showFilters && (
-        <div className="matches-filters">
+        <div className="list-filters-panel">
           <div className="filter-row">
             <div className="filter-group">
               <label>Group By</label>
@@ -299,6 +294,7 @@ const Matches = () => {
             </div>
             {(filterJob || filterCandidate || filterClassification || filterScoreMin || filterStatus) && (
               <button
+                type="button"
                 className="btn btn-secondary"
                 onClick={() => {
                   setFilterJob('');

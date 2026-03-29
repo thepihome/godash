@@ -49,18 +49,18 @@ describe('Candidates Filter Functionality', () => {
 
   test('should render filter panel when show filters is clicked', () => {
     renderWithProviders(<Candidates />);
-    
-    const showFiltersButton = screen.getByText(/show filters/i);
+
+    const showFiltersButton = screen.getByRole('button', { name: /show filters/i });
     fireEvent.click(showFiltersButton);
-    
-    expect(screen.getByText(/filters/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/nothing filtered yet/i)).toBeInTheDocument();
     expect(screen.getByText(/add filter/i)).toBeInTheDocument();
   });
 
   test('should add a new filter condition', () => {
     renderWithProviders(<Candidates />);
-    
-    const showFiltersButton = screen.getByText(/show filters/i);
+
+    const showFiltersButton = screen.getByRole('button', { name: /show filters/i });
     fireEvent.click(showFiltersButton);
     
     const addFilterButton = screen.getByText(/add filter/i);
@@ -71,8 +71,8 @@ describe('Candidates Filter Functionality', () => {
 
   test('should remove a filter condition', () => {
     renderWithProviders(<Candidates />);
-    
-    const showFiltersButton = screen.getByText(/show filters/i);
+
+    const showFiltersButton = screen.getByRole('button', { name: /show filters/i });
     fireEvent.click(showFiltersButton);
     
     const addFilterButton = screen.getByText(/add filter/i);
@@ -89,23 +89,23 @@ describe('Candidates Filter Functionality', () => {
 
   test('should clear all filters', () => {
     renderWithProviders(<Candidates />);
-    
-    const showFiltersButton = screen.getByText(/show filters/i);
+
+    const showFiltersButton = screen.getByRole('button', { name: /show filters/i });
     fireEvent.click(showFiltersButton);
-    
+
     const addFilterButton = screen.getByText(/add filter/i);
     fireEvent.click(addFilterButton);
-    
+
     const clearButton = screen.getByText(/clear all/i);
     fireEvent.click(clearButton);
-    
-    expect(screen.getByText(/no filters applied/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/nothing filtered yet/i)).toBeInTheDocument();
   });
 
   test('should parse query syntax correctly', async () => {
     renderWithProviders(<Candidates />);
-    
-    const showFiltersButton = screen.getByText(/show filters/i);
+
+    const showFiltersButton = screen.getByRole('button', { name: /show filters/i });
     fireEvent.click(showFiltersButton);
     
     const addFilterButton = screen.getByText(/add filter/i);

@@ -164,24 +164,30 @@ const Users = () => {
   }
 
   return (
-    <div className="users-page">
+    <div className="users-page list-page">
       <div className="page-header">
         <h1>Users</h1>
-        <button className="btn btn-primary" onClick={() => {
-          setEditingUser(null);
-          setFormData({
-            email: '',
-            password: '',
-            first_name: '',
-            last_name: '',
-            role: 'candidate',
-            phone: '',
-            is_active: true,
-          });
-          setShowModal(true);
-        }}>
-          <FiPlus /> Add User
-        </button>
+        <div className="list-page-header-actions">
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={() => {
+              setEditingUser(null);
+              setFormData({
+                email: '',
+                password: '',
+                first_name: '',
+                last_name: '',
+                role: 'candidate',
+                phone: '',
+                is_active: true,
+              });
+              setShowModal(true);
+            }}
+          >
+            <FiPlus /> Add User
+          </button>
+        </div>
       </div>
 
       <div className="users-table-container">

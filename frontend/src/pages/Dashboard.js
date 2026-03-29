@@ -94,7 +94,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard list-page">
       <div className="dashboard-header">
         <h1>Welcome back, {user?.first_name}!</h1>
         <button className="btn btn-primary" onClick={handleCreateKpi}>

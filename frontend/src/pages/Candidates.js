@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiSave, FiArrowUp, FiArrowDown, FiUsers, FiEdit3 } from 'react-icons/fi';
+import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiSave, FiArrowUp, FiArrowDown, FiUsers, FiEdit3, FiFilter } from 'react-icons/fi';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import './Candidates.css';
 
@@ -74,7 +74,7 @@ const Candidates = () => {
   const [registerPickerSelectedId, setRegisterPickerSelectedId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState(null);
-  // Removed showFilters state - filters are now always visible in compact form
+  const [showFilters, setShowFilters] = useState(false);
   const [showSaveKpiModal, setShowSaveKpiModal] = useState(false);
   const [kpiName, setKpiName] = useState('');
   
@@ -844,53 +844,66 @@ const Candidates = () => {
   }
 
   return (
-    <div className="candidates-page">
+    <div className="candidates-page list-page">
       <div className="page-header">
         <h1>{user?.role === 'admin' ? 'All Candidates' : 'Assigned Candidates'}</h1>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="list-page-header-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <FiFilter /> {showFilters ? 'Hide' : 'Show'} filters
+          </button>
           {hasActiveFilters && (
-            <button 
+            <button
+              type="button"
               className="btn btn-primary"
               onClick={() => setShowSaveKpiModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <FiSave /> Save as KPI
             </button>
           )}
-        {user?.role === 'admin' && (
-          <button 
-            className="btn btn-primary"
-            onClick={() => setShowAddMethodModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <FiPlus /> Add Candidate
-          </button>
-        )}
+          {user?.role === 'admin' && (
+            <button type="button" className="btn btn-primary" onClick={() => setShowAddMethodModal(true)}>
+              <FiPlus /> Add Candidate
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Compact Inline Filter Section */}
-      <div className="compact-filters-bar">
+      {showFilters && (
+      <div className="list-filters-panel compact-filters-bar">
         <div className="compact-filters-content">
           {filterConditions.length === 0 ? (
-            <div className="compact-filter-row">
+            <div className="compact-filter-row compact-filter-row--empty">
+              <span className="compact-filters-empty-label">Nothing filtered yet</span>
+              <button
+                type="button"
+                className="btn btn-sm btn-primary compact-filter-add"
+                onClick={handleAddFilter}
+              >
+                <FiPlus /> Add filter
+              </button>
               <select
-                className="compact-filter-field"
+                className="compact-filter-field compact-filter-quick"
                 value=""
                 onChange={(e) => {
                   if (e.target.value) {
                     const fieldDef = filterFields.find(f => f.value === e.target.value);
-                    setFilterConditions([{ 
-                      field: e.target.value, 
-                      value: '', 
-                      operator: fieldDef?.type === 'number' ? '=' : 'like' 
+                    setFilterConditions([{
+                      field: e.target.value,
+                      value: '',
+                      operator: fieldDef?.type === 'number' ? '=' : 'like',
                     }]);
                   }
                 }}
               >
-                <option value="">Quick Filter: Select Field</option>
+                <option value="">Quick: pick a field…</option>
                 {filterFields.map(field => (
-                  <option key={field.value} value={field.value}>{field.label}</option>
+                  <option key={field.value} value={field.value}>
+                    {field.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -905,7 +918,7 @@ const Candidates = () => {
                       value={condition.field}
                       onChange={(e) => handleFilterChange(index, 'field', e.target.value)}
                     >
-                      <option value="">Field</option>
+                      <option value="">Select field</option>
                       {filterFields.map(field => (
                         <option key={field.value} value={field.value}>{field.label}</option>
                       ))}
@@ -959,9 +972,10 @@ const Candidates = () => {
                       </>
                     )}
                     <button
+                      type="button"
                       className="btn-icon btn-delete compact-filter-remove"
                       onClick={() => handleRemoveFilter(index)}
-                      title="Remove"
+                      title="Remove filter"
                     >
                       <FiX />
                     </button>
@@ -969,19 +983,19 @@ const Candidates = () => {
                 );
               })}
               <button
+                type="button"
                 className="btn btn-sm btn-primary compact-filter-add"
                 onClick={handleAddFilter}
-                title="Add Filter"
               >
-                <FiPlus />
+                <FiPlus /> Add filter
               </button>
-              {hasActiveFilters && (
+              {filterConditions.length > 0 && (
                 <button
+                  type="button"
                   className="btn btn-sm btn-secondary compact-filter-clear"
                   onClick={handleClearFilters}
-                  title="Clear All"
                 >
-                  Clear
+                  Clear all
                 </button>
               )}
             </div>
@@ -993,6 +1007,7 @@ const Candidates = () => {
           </div>
         )}
       </div>
+      )}
 
       {/* Save as KPI Modal */}
       {showSaveKpiModal && (

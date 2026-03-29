@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import api from '../config/api';
-import { FiArrowUp, FiArrowDown, FiSearch } from 'react-icons/fi';
+import { FiArrowUp, FiArrowDown, FiSearch, FiFilter, FiX } from 'react-icons/fi';
 import './Candidates.css';
 
 const COLUMN_CONFIG = [
@@ -26,6 +26,7 @@ const RegisterCandidates = () => {
   const [sortColumn, setSortColumn] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const handleSort = (columnKey) => {
     if (!COLUMN_CONFIG.find(c => c.key === columnKey)?.sortable) return;
@@ -106,22 +107,47 @@ const RegisterCandidates = () => {
     );
   }
 
+  const hasSearch = Boolean(search.trim());
+
   return (
-    <div className="candidates-page">
+    <div className="candidates-page list-page">
       <div className="page-header">
         <h1>Register</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="search-input-wrapper">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Search by name, email, phone, position, ref..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <div className="list-page-header-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <FiFilter /> {showFilters ? 'Hide' : 'Show'} filters
+          </button>
         </div>
       </div>
+
+      {showFilters && (
+        <div className="list-filters-panel">
+          <div className="filter-row">
+            <div className="filter-group filter-group--wide">
+              <label htmlFor="register-filter-search">Search</label>
+              <div className="list-filter-input-icon">
+                <FiSearch aria-hidden />
+                <input
+                  id="register-filter-search"
+                  type="text"
+                  placeholder="Name, email, phone, position, ref…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+            {hasSearch && (
+              <button type="button" className="btn btn-secondary" onClick={() => setSearch('')}>
+                <FiX /> Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="candidates-table-container">
         {filteredAndSorted.length === 0 ? (

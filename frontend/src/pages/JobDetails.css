@@ -1,96 +1,186 @@
+/* Aligns with list-page + glass panels used on Jobs / Matches */
+
 .job-details {
-  max-width: 1000px;
-  margin: 0 auto;
+  width: 100%;
+}
+
+.job-details-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
 }
 
 .job-details-card {
-  background: white;
-  border-radius: 8px;
-  padding: 30px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.15rem, 2.5vw, 1.75rem);
+  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-panel-border);
+  margin-top: 0;
 }
 
 .job-details-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: start;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  gap: 0.85rem 1.25rem;
+  margin-bottom: 0.35rem;
 }
 
 .job-details-header h1 {
   margin: 0;
-  color: #333;
+  color: var(--text-color);
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.job-company {
+  color: var(--text-secondary-color);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.85rem;
 }
 
 .job-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  margin: 20px 0;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 4px;
+  gap: 0.65rem 1rem;
+  margin: 0.85rem 0 1.1rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--glass-filter-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--glass-panel-border) 80%, transparent);
 }
 
 .meta-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: #666;
+  gap: 0.35rem;
+  color: var(--text-secondary-color);
+  font-size: 0.875rem;
+}
+
+.meta-item svg {
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .job-section {
-  margin: 30px 0;
-  padding-top: 30px;
-  border-top: 1px solid #eee;
+  margin: 1.25rem 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-light);
 }
 
 .job-section:first-of-type {
   border-top: none;
   padding-top: 0;
+  margin-top: 0.5rem;
 }
 
 .job-section h2 {
-  color: #333;
-  margin-bottom: 15px;
-  font-size: 20px;
+  color: var(--text-color);
+  margin-bottom: 0.65rem;
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.job-section p {
+  color: var(--text-color);
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
 .skills-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.45rem;
+}
+
+.job-details .skill-tag {
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--primary-color);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 28%, transparent);
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 600;
 }
 
 .skill-tag-secondary {
-  background: #fff3cd;
-  color: #856404;
+  background: color-mix(in srgb, var(--warning-color) 18%, transparent);
+  color: color-mix(in srgb, var(--warning-color) 55%, var(--text-color));
+  border-color: color-mix(in srgb, var(--warning-color) 35%, transparent);
+}
+
+.match-resume-panel {
+  background: color-mix(in srgb, var(--surface-color) 55%, transparent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
 }
 
 .match-resume {
   display: flex;
-  gap: 10px;
-  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+}
+
+.match-resume .match-resume-select-wrap {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.match-resume .match-resume-select-wrap label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary-color);
+  margin-bottom: 0.28rem;
 }
 
 .match-resume select {
-  flex: 1;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  background: color-mix(in srgb, var(--surface-color) 92%, transparent);
+  color: var(--text-color);
+}
+
+.match-resume select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 18%, transparent);
 }
 
 .external-apply-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  font-size: 16px;
-  margin-bottom: 10px;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.45rem;
 }
 
 .external-link-hint {
-  color: #666;
-  font-size: 14px;
-  margin-top: 5px;
+  color: var(--text-secondary-color);
+  font-size: 0.8125rem;
+  margin-top: 0.35rem;
   font-style: italic;
 }
-

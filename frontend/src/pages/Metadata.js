@@ -123,7 +123,7 @@ const Metadata = () => {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="metadata-page">
+      <div className="metadata-page list-page">
         <div className="metadata-header">
           <h1><FiDatabase /> Metadata</h1>
         </div>
@@ -135,7 +135,7 @@ const Metadata = () => {
   }
 
   return (
-    <div className="metadata-page">
+    <div className="metadata-page list-page">
       <div className="metadata-header">
         <h1><FiDatabase /> Metadata</h1>
       </div>

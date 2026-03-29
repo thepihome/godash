@@ -3,9 +3,14 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { FiPlus, FiSearch, FiMapPin, FiDollarSign, FiX, FiBriefcase, FiLink, FiEdit, FiTrash2, FiZap } from 'react-icons/fi';
+import { FiPlus, FiMapPin, FiDollarSign, FiX, FiBriefcase, FiLink, FiEdit, FiTrash2, FiZap, FiFilter } from 'react-icons/fi';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import './Jobs.css';
+
+const JOB_COL_WIDTHS_CANDIDATE = [150, 250, 180, 100, 120, 96, 118];
+const JOB_COL_MINS_CANDIDATE = [100, 140, 90, 80, 96, 80, 108];
+const JOB_COL_WIDTHS_STAFF = [150, 250, 180, 100, 120, 120, 124, 168];
+const JOB_COL_MINS_STAFF = [100, 140, 90, 80, 96, 88, 112, 148];
 
 const Jobs = () => {
   const { user } = useAuth();
@@ -14,6 +19,7 @@ const Jobs = () => {
   const [search, setSearch] = useState('');
   const [location, setLocation] = useState('');
   const [employmentType, setEmploymentType] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const [showPostJobModal, setShowPostJobModal] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
 
@@ -130,10 +136,9 @@ const Jobs = () => {
 
   // Initialize resizable columns hook (candidate: match score; staff: coverage %)
   const { getColumnProps, ResizeHandle, tableRef } = useResizableColumns(
-    isCandidate
-      ? [150, 250, 180, 100, 120, 88, 100]
-      : [150, 250, 180, 100, 120, 120, 100, 120],
-    isCandidate ? 'jobs-column-widths-candidate' : 'jobs-column-widths-staff'
+    isCandidate ? JOB_COL_WIDTHS_CANDIDATE : JOB_COL_WIDTHS_STAFF,
+    isCandidate ? 'jobs-column-widths-candidate' : 'jobs-column-widths-staff',
+    isCandidate ? JOB_COL_MINS_CANDIDATE : JOB_COL_MINS_STAFF
   );
 
   const handlePostJob = (e) => {
@@ -193,51 +198,85 @@ const Jobs = () => {
     return <div className="loading">Loading jobs...</div>;
   }
 
+  const hasJobFilters = Boolean(search || location || employmentType);
+
   return (
-    <div className="jobs-page">
+    <div className="jobs-page list-page">
       <div className="page-header">
         <h1>Job Openings</h1>
-        {(user?.role === 'consultant' || user?.role === 'admin') && (
-          <button 
-            className="btn btn-primary"
-            onClick={() => setShowPostJobModal(true)}
+        <div className="list-page-header-actions">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowFilters(!showFilters)}
           >
-            <FiPlus /> Post New Job
+            <FiFilter /> {showFilters ? 'Hide' : 'Show'} filters
           </button>
-        )}
+          {(user?.role === 'consultant' || user?.role === 'admin') && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => setShowPostJobModal(true)}
+            >
+              <FiPlus /> Post New Job
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="filters">
-        <div className="filter-group">
-          <FiSearch />
-          <input
-            type="text"
-            placeholder="Search jobs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {showFilters && (
+        <div className="list-filters-panel">
+          <div className="filter-row">
+            <div className="filter-group filter-group--wide">
+              <label htmlFor="jobs-filter-search">Search</label>
+              <input
+                id="jobs-filter-search"
+                type="text"
+                placeholder="Title, company, skills…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label htmlFor="jobs-filter-location">Location</label>
+              <input
+                id="jobs-filter-location"
+                type="text"
+                placeholder="City or region"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <label htmlFor="jobs-filter-type">Employment</label>
+              <select
+                id="jobs-filter-type"
+                value={employmentType}
+                onChange={(e) => setEmploymentType(e.target.value)}
+              >
+                <option value="">All types</option>
+                <option value="full-time">Full time</option>
+                <option value="part-time">Part time</option>
+                <option value="contract">Contract</option>
+                <option value="remote">Remote</option>
+              </select>
+            </div>
+            {hasJobFilters && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setSearch('');
+                  setLocation('');
+                  setEmploymentType('');
+                }}
+              >
+                <FiX /> Clear
+              </button>
+            )}
+          </div>
         </div>
-        <div className="filter-group">
-          <FiMapPin />
-          <input
-            type="text"
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-        </div>
-        <select
-          value={employmentType}
-          onChange={(e) => setEmploymentType(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Types</option>
-          <option value="full-time">Full Time</option>
-          <option value="part-time">Part Time</option>
-          <option value="contract">Contract</option>
-          <option value="remote">Remote</option>
-        </select>
-      </div>
+      )}
 
       <div className="jobs-table-container">
         <table ref={tableRef} className="table jobs-table" style={{ tableLayout: 'fixed', width: '100%' }}>
@@ -256,8 +295,16 @@ const Jobs = () => {
                   Match coverage<ResizeHandle index={5} />
                 </th>
               )}
-              <th {...getColumnProps(isCandidate || isStaff ? 6 : 5)}>Status<ResizeHandle index={isCandidate || isStaff ? 6 : 5} /></th>
-              {isStaff && <th {...getColumnProps(7)}>Actions<ResizeHandle index={7} /></th>}
+              <th {...getColumnProps(isCandidate || isStaff ? 6 : 5)} className="col-status">
+                Status
+                <ResizeHandle index={isCandidate || isStaff ? 6 : 5} />
+              </th>
+              {isStaff && (
+                <th {...getColumnProps(7)} className="col-actions">
+                  Actions
+                  <ResizeHandle index={7} />
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -330,13 +377,15 @@ const Jobs = () => {
                       </span>
                     </td>
                   )}
-                  <td>
-                    <span className={`badge badge-${job.status === 'active' ? 'success' : job.status === 'closed' ? 'warning' : job.status === 'draft' ? 'info' : 'danger'}`}>
+                  <td className="col-status">
+                    <span
+                      className={`badge badge-${job.status === 'active' ? 'success' : job.status === 'closed' ? 'warning' : job.status === 'draft' ? 'info' : 'danger'}`}
+                    >
                       {job.status}
                     </span>
                   </td>
                   {isStaff && (
-                    <td onClick={(e) => e.stopPropagation()}>
+                    <td className="col-actions" onClick={(e) => e.stopPropagation()}>
                       <div className="job-actions-inline">
                         <button
                           type="button"

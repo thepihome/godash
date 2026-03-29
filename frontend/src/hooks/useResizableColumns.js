@@ -4,9 +4,10 @@ import { useState, useCallback, useRef, useEffect } from 'react';
  * Hook for managing resizable table columns
  * @param {Array} initialWidths - Initial widths for each column (in pixels or percentages)
  * @param {string} storageKey - Optional localStorage key to persist column widths
+ * @param {number[]|null} columnMinWidths - Optional min width (px) per column index
  * @returns {Object} - Column widths, resize handlers, and column props
  */
-export function useResizableColumns(initialWidths = [], storageKey = null) {
+export function useResizableColumns(initialWidths = [], storageKey = null, columnMinWidths = null) {
   // Load saved widths from localStorage if available
   const getInitialWidths = () => {
     if (storageKey) {
@@ -95,16 +96,20 @@ export function useResizableColumns(initialWidths = [], storageKey = null) {
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   // Get column style props
-  const getColumnProps = useCallback((index) => {
-    return {
-      style: {
-        width: columnWidths[index] || 'auto',
-        minWidth: '50px',
-        position: 'relative',
-        userSelect: 'none'
-      }
-    };
-  }, [columnWidths]);
+  const getColumnProps = useCallback(
+    (index) => {
+      const minPx = columnMinWidths?.[index] ?? 50;
+      return {
+        style: {
+          width: columnWidths[index] || 'auto',
+          minWidth: `${minPx}px`,
+          position: 'relative',
+          userSelect: 'none',
+        },
+      };
+    },
+    [columnWidths, columnMinWidths]
+  );
 
   // Get resize handle component
   const ResizeHandle = useCallback(({ index }) => {
