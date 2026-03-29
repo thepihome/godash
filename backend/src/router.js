@@ -18,6 +18,7 @@ import { handleCRM } from './routes/crm.js';
 import { handleActivityLogs } from './routes/activityLogs.js';
 import { handleJobRoles } from './routes/jobRoles.js';
 import { handleAiSettings } from './routes/aiSettings.js';
+import { handleNotifications } from './routes/notifications.js';
 import { authenticate } from './middleware/auth.js';
 import { getCorsHeaders, handleCORS, addCorsHeaders } from './utils/cors.js';
 
@@ -180,6 +181,8 @@ export async function handleRequest(request, env, ctx) {
       response = await handleJobRoles(request, env, user);
     } else if (path.startsWith('/api/settings/ai-matching')) {
       response = await handleAiSettings(request, env, user);
+    } else if (path.startsWith('/api/notifications')) {
+      response = await handleNotifications(request, env, user);
     } else {
       response = new Response(
         JSON.stringify({ error: 'Not found' }),

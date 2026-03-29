@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { FiMenu, FiX, FiHome, FiBriefcase, FiFileText, FiUsers, FiClock, FiDatabase, FiSettings, FiLogOut, FiLayers } from 'react-icons/fi';
 import { APP_UI_VERSION } from '../version';
+import NotificationBell from './NotificationBell';
 import './Layout.css';
 
 const Layout = ({ children }) => {
@@ -41,12 +42,15 @@ const Layout = ({ children }) => {
             {sidebarOpen ? <FiX /> : <FiMenu />}
           </button>
           <h1 className="navbar-title">GoDash</h1>
-          <div className="navbar-user">
-            <span>{user?.first_name} {user?.last_name}</span>
-            <span className="navbar-role">{user?.role}</span>
-            <button onClick={handleLogout} className="btn-logout">
-              <FiLogOut /> Logout
-            </button>
+          <div className="navbar-trailing">
+            <NotificationBell />
+            <div className="navbar-user">
+              <span>{user?.first_name} {user?.last_name}</span>
+              <span className="navbar-role">{user?.role}</span>
+              <button onClick={handleLogout} className="btn-logout">
+                <FiLogOut /> Logout
+              </button>
+            </div>
           </div>
         </div>
       </nav>
