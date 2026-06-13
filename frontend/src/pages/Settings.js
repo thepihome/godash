@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { FiSettings, FiUser, FiDroplet, FiUsers, FiShield, FiSave, FiX, FiPlus, FiEdit, FiTrash2, FiMail, FiCalendar, FiEdit2, FiUserPlus, FiUserMinus, FiInfo, FiZap } from 'react-icons/fi';
 import AiMatchingSettings from '../components/AiMatchingSettings';
+import LoadingButton from '../components/LoadingButton';
 import './Settings.css';
 
 const Settings = () => {
@@ -198,13 +199,15 @@ const Settings = () => {
                   </div>
                 </div>
                 <div className="form-actions">
-                  <button
+                  <LoadingButton
                     type="submit"
                     className="btn btn-primary"
-                    disabled={updateProfileMutation.isLoading}
+                    icon={FiSave}
+                    loading={updateProfileMutation.isLoading}
+                    loadingLabel="Saving..."
                   >
-                    <FiSave /> {updateProfileMutation.isLoading ? 'Saving...' : 'Save Changes'}
-                  </button>
+                    Save Changes
+                  </LoadingButton>
                 </div>
               </form>
             </div>
@@ -826,13 +829,15 @@ const UsersManagement = () => {
                       >
                         Cancel
                       </button>
-                      <button 
-                        type="submit" 
+                      <LoadingButton
+                        type="submit"
                         className="btn btn-primary"
-                        disabled={updateMutation.isLoading}
+                        icon={FiSave}
+                        loading={updateMutation.isLoading}
+                        loadingLabel="Saving..."
                       >
-                        <FiSave /> {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
-                      </button>
+                        Save Changes
+                      </LoadingButton>
                     </div>
                   </form>
                 )}

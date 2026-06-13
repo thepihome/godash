@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../config/api';
 import { FiPlus, FiTrash2, FiUser, FiMail, FiPhone, FiShield, FiCalendar, FiX, FiUsers, FiEdit2, FiSave } from 'react-icons/fi';
+import LoadingButton from '../components/LoadingButton';
 import { useResizableColumns } from '../hooks/useResizableColumns';
 import './Users.css';
 
@@ -580,13 +581,15 @@ const Users = () => {
                       >
                         Cancel
                       </button>
-                      <button 
-                        type="submit" 
+                      <LoadingButton
+                        type="submit"
                         className="btn btn-primary"
-                        disabled={updateMutation.isLoading}
+                        icon={FiSave}
+                        loading={updateMutation.isLoading}
+                        loadingLabel="Saving..."
                       >
-                        <FiSave /> {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
-                      </button>
+                        Save Changes
+                      </LoadingButton>
                     </div>
                   </form>
                 )}
