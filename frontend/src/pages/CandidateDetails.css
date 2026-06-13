@@ -13,7 +13,7 @@
 
 .candidate-info p {
   margin: 10px 0;
-  color: #666;
+  color: var(--text-secondary-color);
 }
 
 .candidate-section {
@@ -56,7 +56,7 @@
 .match-item p,
 .crm-item p {
   margin: 5px 0;
-  color: #666;
+  color: var(--text-secondary-color);
   font-size: 14px;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .profile-item a {
-  color: #007bff;
+  color: var(--primary-color);
   text-decoration: none;
 }
 
@@ -93,7 +93,7 @@
 
 .profile-item p {
   margin: 5px 0 0 0;
-  color: #666;
+  color: var(--text-secondary-color);
   line-height: 1.6;
 }
 
@@ -111,7 +111,7 @@
 
 .resume-meta {
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
   margin-left: 10px;
 }
 
@@ -128,7 +128,7 @@
 .skill-tag {
   display: inline-block;
   background: #e7f3ff;
-  color: #007bff;
+  color: var(--primary-color);
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -220,7 +220,7 @@
   padding: 15px;
   background: #f8f9fa;
   border-radius: 4px;
-  border-left: 3px solid #007bff;
+  border-left: 3px solid var(--primary-color);
 }
 
 .activity-header {
@@ -267,7 +267,7 @@
 }
 
 .activity-description {
-  color: #666;
+  color: var(--text-secondary-color);
   font-size: 14px;
 }
 
@@ -277,7 +277,7 @@
   align-items: flex-end;
   gap: 5px;
   font-size: 12px;
-  color: #999;
+  color: var(--text-muted);
 }
 
 .activity-user {
@@ -286,7 +286,7 @@
 }
 
 .activity-time {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .activity-change {
@@ -324,7 +324,7 @@
 }
 
 .change-arrow {
-  color: #666;
+  color: var(--text-secondary-color);
   font-weight: bold;
 }
 
@@ -411,7 +411,7 @@
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
@@ -421,7 +421,7 @@
   background: #e7f3ff;
   border-radius: 4px;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary-color);
   font-size: 13px;
 }
 
@@ -430,12 +430,12 @@
   padding: 8px 12px;
   background: #f8f9fa;
   border-radius: 4px;
-  border-left: 3px solid #007bff;
+  border-left: 3px solid var(--primary-color);
 }
 
 .activity-count {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary-color);
   font-weight: 500;
 }
 
@@ -462,7 +462,7 @@
 
 .candidate-crm-hint {
   font-size: 0.875rem;
-  color: #666;
+  color: var(--text-secondary-color);
   margin: 0 0 1rem;
   line-height: 1.45;
 }
@@ -482,6 +482,6 @@
 
 .candidate-crm-empty {
   margin: 0;
-  color: #666;
+  color: var(--text-secondary-color);
 }
 

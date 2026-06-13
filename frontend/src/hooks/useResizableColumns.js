@@ -123,13 +123,13 @@ export function useResizableColumns(initialWidths = [], storageKey = null, colum
           bottom: 0,
           width: '5px',
           cursor: 'col-resize',
-          backgroundColor: isResizing && resizingColumn === index ? '#007bff' : 'transparent',
+          backgroundColor: isResizing && resizingColumn === index ? 'var(--primary-color)' : 'transparent',
           zIndex: 10,
           userSelect: 'none'
         }}
         onMouseEnter={(e) => {
           if (!isResizing) {
-            e.currentTarget.style.backgroundColor = '#007bff';
+            e.currentTarget.style.backgroundColor = 'var(--primary-color)';
           }
         }}
         onMouseLeave={(e) => {

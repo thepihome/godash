@@ -41,7 +41,13 @@ const Layout = ({ children }) => {
           <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <FiX /> : <FiMenu />}
           </button>
-          <h1 className="navbar-title">GoDash</h1>
+          <Link to="/" className="navbar-brand" onClick={() => setSidebarOpen(false)}>
+            <span className="brand-mark" aria-hidden="true">GB</span>
+            <span className="brand-text">
+              <span className="brand-name">GoBunny</span>
+              <span className="brand-tagline">Platform</span>
+            </span>
+          </Link>
           <div className="navbar-trailing">
             <NotificationBell />
             <div className="navbar-user">

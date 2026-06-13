@@ -23,20 +23,18 @@
   gap: 0.65rem;
   padding: 0.75rem 0.9rem;
   border-radius: var(--radius-lg);
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  border: 1px solid var(--glass-panel-border);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   min-width: 0;
 }
 
 .timesheets-stat-card--hours {
-  border-color: color-mix(in srgb, var(--primary-color) 35%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
 }
 
 .timesheets-stat-card--pending {
-  border-color: color-mix(in srgb, #f59e0b 40%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, #f59e0b 40%, var(--border-color));
 }
 
 .timesheets-stat-icon {
@@ -85,11 +83,9 @@
   gap: 0 0.85rem;
   padding: 0.95rem 1rem;
   border-radius: var(--radius-lg);
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  border: 1px solid var(--glass-panel-border);
-  box-shadow: var(--shadow-glass);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   transition:
     box-shadow 0.2s ease,
     border-color 0.2s ease,
@@ -98,7 +94,7 @@
 
 .timesheet-card:hover {
   box-shadow: var(--shadow-lg);
-  border-color: color-mix(in srgb, var(--primary-color) 22%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, var(--primary-color) 22%, var(--border-color));
 }
 
 .timesheet-card__date-block {
@@ -287,9 +283,7 @@
   text-align: center;
   padding: 2.5rem 1.25rem;
   border-radius: var(--radius-lg);
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  background: var(--surface-color);
   border: 1px dashed color-mix(in srgb, var(--border-color) 85%, transparent);
   color: var(--text-secondary-color);
 }
@@ -312,7 +306,6 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;

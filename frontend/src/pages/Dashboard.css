@@ -6,13 +6,13 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.5rem;
 }
 
 .dashboard-header h1 {
-  color: var(--text-color);
+  color: var(--text-heading);
   margin: 0;
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
   font-weight: 700;
   letter-spacing: -0.03em;
 }
@@ -25,14 +25,14 @@
 }
 
 .kpi-card {
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  background: var(--surface-color);
   border-radius: var(--radius-lg);
-  padding: 1.35rem 1.5rem;
-  box-shadow: var(--shadow-glass);
-  border: 1px solid var(--glass-panel-border);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   position: relative;
   overflow: hidden;
 }
@@ -43,15 +43,16 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: var(--gradient-primary);
+  height: 3px;
+  background: var(--primary-color);
   transform: scaleX(0);
-  transition: transform 0.3s;
+  transition: transform 0.25s ease;
+  transform-origin: left;
 }
 
 .kpi-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--primary-color) 25%, var(--border-color));
 }
 
 .kpi-card:hover::before {
@@ -67,9 +68,10 @@
 
 .kpi-header h3 {
   margin: 0;
-  font-size: 16px;
-  color: #666;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary-color);
 }
 
 .kpi-actions {
@@ -82,29 +84,28 @@
   border: none;
   cursor: pointer;
   padding: 5px;
-  color: #666;
+  color: var(--text-secondary-color);
   transition: color 0.2s;
 }
 
 .btn-icon:hover {
-  color: #007bff;
+  color: var(--primary-color);
 }
 
 .kpi-value {
-  font-size: 42px;
+  font-size: 2.5rem;
   font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-color);
   margin-bottom: 12px;
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .kpi-description {
-  font-size: 14px;
-  color: #999;
+  font-size: 0.875rem;
+  color: var(--text-muted);
   margin: 0;
+  line-height: 1.5;
 }
 
 .kpi-clickable {
@@ -112,23 +113,23 @@
 }
 
 .kpi-clickable:hover {
-  border: 2px solid #007bff;
+  border-color: var(--primary-color);
 }
 
 .kpi-hint {
-  font-size: 12px;
-  color: #007bff;
+  font-size: 0.75rem;
+  color: var(--primary-color);
   margin: 5px 0 0 0;
-  font-style: italic;
 }
 
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px 20px;
-  background: white;
-  border-radius: 8px;
-  color: #999;
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
 }
 
 .modal-overlay {
@@ -137,7 +138,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.7);
+  background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -164,7 +165,7 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-xl);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
   animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -182,6 +183,7 @@
 .modal-content h2 {
   margin-top: 0;
   margin-bottom: 20px;
+  color: var(--text-heading);
 }
 
 .modal-actions {
@@ -190,5 +192,3 @@
   justify-content: flex-end;
   margin-top: 20px;
 }
-
-

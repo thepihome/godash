@@ -13,13 +13,11 @@
 }
 
 .job-details-card {
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  background: var(--surface-color);
   border-radius: var(--radius-lg);
   padding: clamp(1.15rem, 2.5vw, 1.75rem);
-  box-shadow: var(--shadow-glass);
-  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   margin-top: 0;
 }
 
@@ -57,10 +55,8 @@
   margin: 0.85rem 0 1.1rem;
   padding: 0.55rem 0.75rem;
   background: var(--glass-filter-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--glass-panel-border) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
 }
 
 .meta-item {

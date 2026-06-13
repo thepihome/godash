@@ -27,13 +27,13 @@
 }
 
 .resume-date {
-  color: #999;
+  color: var(--text-muted);
   font-size: 14px;
   margin: 5px 0;
 }
 
 .resume-summary {
-  color: #666;
+  color: var(--text-secondary-color);
   margin: 15px 0;
 }
 
@@ -45,7 +45,7 @@
 }
 
 .resume-experience {
-  color: #666;
+  color: var(--text-secondary-color);
   margin: 10px 0;
 }
 

@@ -11,117 +11,125 @@ export const useTheme = () => {
 };
 
 const themes = {
-  ui8: {
-    name: 'UI8 Modern',
-    primary: '#6366f1',
-    secondary: '#8b5cf6',
-    background: '#f8fafc',
+  gobunny: {
+    name: 'GoBunny',
+    primary: '#2B3D7E',
+    secondary: '#64748b',
+    background: '#fafbfc',
     surface: '#ffffff',
     text: '#1e293b',
     textSecondary: '#64748b',
     border: '#e2e8f0',
-    navbar: '#1e293b',
+    navbar: '#ffffff',
   },
   light: {
     name: 'Light',
-    primary: '#007bff',
-    secondary: '#6c757d',
+    primary: '#2B3D7E',
+    secondary: '#64748b',
     background: '#ffffff',
-    surface: '#f8f9fa',
-    text: '#212529',
-    textSecondary: '#6c757d',
-    border: '#dee2e6',
-    navbar: '#2c3e50',
+    surface: '#f8fafc',
+    text: '#0f172a',
+    textSecondary: '#64748b',
+    border: '#e2e8f0',
+    navbar: '#ffffff',
   },
   dark: {
     name: 'Dark',
-    primary: '#0d6efd',
-    secondary: '#6c757d',
-    background: '#1a1a1a',
-    surface: '#2d2d2d',
-    text: '#ffffff',
-    textSecondary: '#b0b0b0',
-    border: '#404040',
-    navbar: '#1a1a1a',
+    primary: '#5b7fd4',
+    secondary: '#94a3b8',
+    background: '#0f172a',
+    surface: '#1e293b',
+    text: '#f8fafc',
+    textSecondary: '#94a3b8',
+    border: '#334155',
+    navbar: '#0f172a',
   },
   blue: {
     name: 'Blue',
-    primary: '#0056b3',
-    secondary: '#6c757d',
+    primary: '#1e3a5f',
+    secondary: '#64748b',
     background: '#f0f4f8',
-    surface: '#e1e8ed',
-    text: '#1a1a1a',
-    textSecondary: '#4a5568',
+    surface: '#ffffff',
+    text: '#0f172a',
+    textSecondary: '#475569',
     border: '#cbd5e0',
     navbar: '#1e3a5f',
   },
   green: {
     name: 'Green',
-    primary: '#28a745',
-    secondary: '#6c757d',
-    background: '#f0f9f4',
-    surface: '#e8f5e9',
-    text: '#1a1a1a',
-    textSecondary: '#4a5568',
-    border: '#c8e6c9',
-    navbar: '#2e7d32',
+    primary: '#059669',
+    secondary: '#64748b',
+    background: '#f0fdf4',
+    surface: '#ffffff',
+    text: '#0f172a',
+    textSecondary: '#475569',
+    border: '#bbf7d0',
+    navbar: '#065f46',
   },
   purple: {
     name: 'Purple',
-    primary: '#6f42c1',
-    secondary: '#6c757d',
-    background: '#f5f3ff',
-    surface: '#ede9fe',
-    text: '#1a1a1a',
-    textSecondary: '#4a5568',
+    primary: '#5b21b6',
+    secondary: '#64748b',
+    background: '#faf5ff',
+    surface: '#ffffff',
+    text: '#0f172a',
+    textSecondary: '#475569',
     border: '#ddd6fe',
-    navbar: '#5b21b6',
+    navbar: '#4c1d95',
   },
+};
+
+const resolveThemeKey = (saved) => {
+  if (!saved || saved === 'ui8') return 'gobunny';
+  return themes[saved] ? saved : 'gobunny';
 };
 
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved || 'ui8';
+    return resolveThemeKey(localStorage.getItem('theme'));
   });
 
   useEffect(() => {
     const theme = themes[currentTheme];
     const root = document.documentElement;
     const isDarkTheme = currentTheme === 'dark';
+    const isLightNavbar = theme.navbar === '#ffffff' || theme.navbar.toLowerCase() === '#fff';
 
     root.style.setProperty('--primary-color', theme.primary);
+    root.style.setProperty('--primary-hover', isDarkTheme ? theme.primary : '#1e2d5f');
     root.style.setProperty('--secondary-color', theme.secondary);
     root.style.setProperty('--background-color', theme.background);
     root.style.setProperty('--surface-color', theme.surface);
     root.style.setProperty('--text-color', theme.text);
+    root.style.setProperty('--text-heading', isDarkTheme ? theme.text : '#0f172a');
     root.style.setProperty('--text-secondary-color', theme.textSecondary);
     root.style.setProperty('--border-color', theme.border);
     root.style.setProperty('--navbar-color', theme.navbar);
+    root.style.setProperty('--gradient-primary', theme.primary);
 
     const mesh = isDarkTheme
-      ? `radial-gradient(ellipse 100% 70% at 20% -5%, color-mix(in srgb, ${theme.primary} 35%, transparent) 0%, transparent 55%),
-         radial-gradient(ellipse 80% 50% at 100% 100%, color-mix(in srgb, ${theme.secondary} 25%, transparent) 0%, transparent 50%),
-         linear-gradient(168deg, ${theme.background} 0%, ${theme.surface} 50%, ${theme.background} 100%)`
-      : `radial-gradient(ellipse 110% 65% at -8% -10%, color-mix(in srgb, ${theme.primary} 22%, transparent) 0%, transparent 52%),
-         radial-gradient(ellipse 90% 55% at 108% 8%, color-mix(in srgb, ${theme.secondary} 18%, transparent) 0%, transparent 48%),
-         linear-gradient(168deg, ${theme.background} 0%, #ffffff 38%, ${theme.background} 100%)`;
+      ? `linear-gradient(168deg, ${theme.background} 0%, ${theme.surface} 50%, ${theme.background} 100%)`
+      : `linear-gradient(180deg, #f8fafc 0%, ${theme.background} 55%, #ffffff 100%)`;
 
     root.style.setProperty('--mesh-gradient', mesh);
 
     if (isDarkTheme) {
-      root.style.setProperty('--glass-panel-bg', 'rgba(15, 23, 42, 0.58)');
+      root.style.setProperty('--glass-panel-bg', theme.surface);
       root.style.setProperty('--glass-panel-border', 'rgba(148, 163, 184, 0.14)');
-      root.style.setProperty('--glass-sidebar-bg', 'rgba(15, 23, 42, 0.45)');
-      root.style.setProperty('--glass-filter-bg', 'rgba(30, 41, 59, 0.55)');
-      root.style.setProperty('--glass-table-header', 'rgba(30, 41, 59, 0.75)');
+      root.style.setProperty('--glass-sidebar-bg', theme.surface);
+      root.style.setProperty('--glass-filter-bg', theme.background);
+      root.style.setProperty('--glass-table-header', theme.background);
+      root.style.setProperty('--surface-muted', theme.background);
     } else {
-      root.style.setProperty('--glass-panel-bg', 'rgba(255, 255, 255, 0.72)');
-      root.style.setProperty('--glass-panel-border', 'rgba(255, 255, 255, 0.88)');
-      root.style.setProperty('--glass-sidebar-bg', 'rgba(255, 255, 255, 0.78)');
-      root.style.setProperty('--glass-filter-bg', 'rgba(255, 255, 255, 0.58)');
-      root.style.setProperty('--glass-table-header', 'rgba(248, 250, 252, 0.94)');
+      root.style.setProperty('--glass-panel-bg', '#ffffff');
+      root.style.setProperty('--glass-panel-border', 'rgba(15, 23, 42, 0.08)');
+      root.style.setProperty('--glass-sidebar-bg', '#ffffff');
+      root.style.setProperty('--glass-filter-bg', '#f8fafc');
+      root.style.setProperty('--glass-table-header', '#f8fafc');
+      root.style.setProperty('--surface-muted', '#f1f5f9');
     }
+
+    root.dataset.navbarStyle = isLightNavbar ? 'light' : 'dark';
 
     document.body.style.background = '';
     document.body.style.color = theme.text;
@@ -139,5 +147,3 @@ export const ThemeProvider = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
-
-

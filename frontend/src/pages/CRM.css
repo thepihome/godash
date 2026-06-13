@@ -66,20 +66,18 @@
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: var(--radius-lg);
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  border: 1px solid var(--glass-panel-border);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   min-width: 0;
 }
 
 .crm-stat-card--accent {
-  border-color: color-mix(in srgb, var(--primary-color) 32%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, var(--primary-color) 32%, var(--border-color));
 }
 
 .crm-stat-card--warn {
-  border-color: color-mix(in srgb, #f59e0b 45%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, #f59e0b 45%, var(--border-color));
 }
 
 .crm-stat-card--warn .crm-stat-icon {
@@ -296,11 +294,9 @@
   flex-direction: column;
   padding: 1rem 1.1rem;
   border-radius: var(--radius-lg);
-  background: var(--glass-panel-bg);
-  backdrop-filter: blur(14px) saturate(150%);
-  -webkit-backdrop-filter: blur(14px) saturate(150%);
-  border: 1px solid var(--glass-panel-border);
-  box-shadow: var(--shadow-glass);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
   transition:
     box-shadow 0.2s ease,
     border-color 0.2s ease;
@@ -309,11 +305,11 @@
 
 .crm-card:hover {
   box-shadow: var(--shadow-lg);
-  border-color: color-mix(in srgb, var(--primary-color) 22%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, var(--primary-color) 22%, var(--border-color));
 }
 
 .crm-card--overdue {
-  border-color: color-mix(in srgb, #f59e0b 40%, var(--glass-panel-border));
+  border-color: color-mix(in srgb, #f59e0b 40%, var(--border-color));
   box-shadow: 0 0 0 1px color-mix(in srgb, #f59e0b 25%, transparent);
 }
 
@@ -571,8 +567,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--glass-panel-bg);
-  border: 2px solid color-mix(in srgb, var(--primary-color) 35%, var(--glass-panel-border));
+  background: var(--surface-color);
+  border: 2px solid color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
   color: var(--primary-color);
   box-shadow: var(--shadow-sm);
 }
@@ -639,7 +635,6 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;

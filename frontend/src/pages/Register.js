@@ -42,8 +42,16 @@ const Register = () => {
 
   return (
     <div className="auth-container">
+      <div className="auth-brand">
+        <span className="brand-mark" aria-hidden="true">GB</span>
+        <div className="auth-brand-text">
+          <h1>GoBunny</h1>
+          <p>Platform</p>
+        </div>
+      </div>
       <div className="auth-card">
-        <h2>Register</h2>
+        <h2>Create account</h2>
+        <p className="auth-subtitle">Join the GoBunny platform to get started</p>
         {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -100,9 +108,10 @@ const Register = () => {
           </button>
         </form>
         <p className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </div>
+      <p className="auth-footer">Consulting &amp; career services — one standard of excellence</p>
     </div>
   );
 };

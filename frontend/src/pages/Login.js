@@ -75,9 +75,16 @@ const Login = () => {
 
   return (
     <div className="auth-container">
+      <div className="auth-brand">
+        <span className="brand-mark" aria-hidden="true">GB</span>
+        <div className="auth-brand-text">
+          <h1>GoBunny</h1>
+          <p>Platform</p>
+        </div>
+      </div>
       <div className="auth-card">
         <h2>Sign in</h2>
-        <p className="auth-subtitle">Use your Google account to continue</p>
+        <p className="auth-subtitle">Use your Google account to access the GoBunny platform</p>
         {error && <div className="error">{error}</div>}
         <div className="google-signin-wrapper">
           {GOOGLE_CLIENT_ID ? (
@@ -92,6 +99,7 @@ const Login = () => {
         </div>
         {loading && <p className="auth-loading">Signing in...</p>}
       </div>
+      <p className="auth-footer">Consulting &amp; career services — one standard of excellence</p>
     </div>
   );
 };
