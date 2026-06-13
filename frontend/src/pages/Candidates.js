@@ -5,7 +5,7 @@ import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { FiPlus, FiUser, FiMail, FiPhone, FiTrash2, FiX, FiSave, FiArrowUp, FiArrowDown, FiUsers, FiEdit3, FiFilter } from 'react-icons/fi';
 import { useResizableColumns } from '../hooks/useResizableColumns';
-import LoadingButton, { iconSpinClass } from '../components/LoadingButton';
+import LoadingButton from '../components/LoadingButton';
 import './Candidates.css';
 
 /** Map register_candidates row → candidate form defaults (fname/lname/email/phone/position/start_date/price/ref). */

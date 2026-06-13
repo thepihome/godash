@@ -5,7 +5,7 @@ import api from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { FiFilter, FiChevronDown, FiChevronUp, FiUser, FiX, FiRefreshCw } from 'react-icons/fi';
 import { useResizableColumns } from '../hooks/useResizableColumns';
-import LoadingButton, { iconSpinClass } from '../components/LoadingButton';
+import LoadingButton from '../components/LoadingButton';
 import './Matches.css';
 
 const Matches = () => {
