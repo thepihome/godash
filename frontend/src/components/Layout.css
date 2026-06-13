@@ -265,7 +265,7 @@
 
 .main-content {
   flex: 1;
-  padding: clamp(1.5rem, 3vw, 2rem);
+  padding: var(--space-page);
   overflow-x: hidden;
   overflow-y: auto;
   background: transparent;

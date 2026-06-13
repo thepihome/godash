@@ -6,6 +6,27 @@ import { query, queryOne, execute } from '../utils/db.js';
 import { addCorsHeaders } from '../utils/cors.js';
 import { buildFilterConditions } from './candidates.js';
 
+function parseQueryConfig(queryConfig) {
+  if (!queryConfig) return null;
+  if (typeof queryConfig === 'object') return queryConfig;
+  if (typeof queryConfig === 'string') {
+    try {
+      let parsed = JSON.parse(queryConfig);
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      return typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function serializeQueryConfig(queryConfig) {
+  if (!queryConfig) return null;
+  if (typeof queryConfig === 'string') return queryConfig;
+  return JSON.stringify(queryConfig);
+}
+
 export async function handleKPIs(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -24,6 +45,7 @@ export async function handleKPIs(request, env, user) {
       { value: 'pending_timesheets', label: 'Pending Timesheets', roles: ['consultant'] },
       { value: 'total_users', label: 'Total Users', roles: ['admin'] },
       { value: 'total_candidates', label: 'Total Candidates', roles: ['admin', 'consultant'] },
+      { value: 'custom_filter', label: 'Custom Candidate Filter', roles: ['consultant', 'admin'] },
     ];
 
     if (!user || !user.role) {
@@ -62,17 +84,10 @@ export async function handleKPIs(request, env, user) {
         [user.id]
       );
 
-      // Parse query_config JSON if present
-      const parsedKpis = kpis.map(kpi => {
-        if (kpi.query_config && typeof kpi.query_config === 'string') {
-          try {
-            kpi.query_config = JSON.parse(kpi.query_config);
-          } catch (e) {
-            kpi.query_config = null;
-          }
-        }
-        return kpi;
-      });
+      const parsedKpis = kpis.map((kpi) => ({
+        ...kpi,
+        query_config: parseQueryConfig(kpi.query_config),
+      }));
 
       // Calculate current values for each KPI
       const kpisWithValues = await Promise.all(
@@ -157,10 +172,9 @@ export async function handleKPIs(request, env, user) {
                 currentValue = parseInt(candidatesResult[0]?.count || 0);
                 break;
 
-              case 'custom_filter':
-                // Parse query_config to get filter conditions
+              case 'custom_filter': {
                 try {
-                  const queryConfig = kpi.query_config ? JSON.parse(kpi.query_config) : null;
+                  const queryConfig = parseQueryConfig(kpi.query_config);
                   if (queryConfig && queryConfig.type === 'candidate_filter') {
                     let whereConditions = ["u.role = 'candidate'"];
                     const filterParams = [];
@@ -266,6 +280,7 @@ export async function handleKPIs(request, env, user) {
                   currentValue = null;
                 }
                 break;
+              }
 
               default:
                 currentValue = null;
@@ -320,7 +335,7 @@ export async function handleKPIs(request, env, user) {
         );
       }
 
-      const queryConfigStr = query_config ? JSON.stringify(query_config) : null;
+      const queryConfigStr = serializeQueryConfig(query_config);
 
       const result = await execute(
         env,
@@ -336,13 +351,8 @@ export async function handleKPIs(request, env, user) {
         [kpiId]
       );
 
-      // Parse query_config if present
-      if (newKpi.query_config && typeof newKpi.query_config === 'string') {
-        try {
-          newKpi.query_config = JSON.parse(newKpi.query_config);
-        } catch (e) {
-          newKpi.query_config = null;
-        }
+      if (newKpi.query_config) {
+        newKpi.query_config = parseQueryConfig(newKpi.query_config);
       }
 
       return addCorsHeaders(
@@ -392,8 +402,8 @@ export async function handleKPIs(request, env, user) {
       const body = await request.json();
       const { name, description, metric_type, display_order, is_active, query_config } = body;
 
-      const queryConfigStr = query_config !== undefined 
-        ? (query_config ? JSON.stringify(query_config) : null)
+      const queryConfigStr = query_config !== undefined
+        ? serializeQueryConfig(query_config)
         : existingKpi.query_config;
 
       await execute(
@@ -418,13 +428,8 @@ export async function handleKPIs(request, env, user) {
         [kpiId]
       );
 
-      // Parse query_config if present
-      if (updatedKpi.query_config && typeof updatedKpi.query_config === 'string') {
-        try {
-          updatedKpi.query_config = JSON.parse(updatedKpi.query_config);
-        } catch (e) {
-          updatedKpi.query_config = null;
-        }
+      if (updatedKpi.query_config) {
+        updatedKpi.query_config = parseQueryConfig(updatedKpi.query_config);
       }
 
       return addCorsHeaders(

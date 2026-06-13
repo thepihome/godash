@@ -19,6 +19,7 @@ import { handleActivityLogs } from './routes/activityLogs.js';
 import { handleJobRoles } from './routes/jobRoles.js';
 import { handleAiSettings } from './routes/aiSettings.js';
 import { handleNotifications } from './routes/notifications.js';
+import { handleDashboard } from './routes/dashboard.js';
 import { authenticate } from './middleware/auth.js';
 import { getCorsHeaders, handleCORS, addCorsHeaders } from './utils/cors.js';
 
@@ -167,6 +168,8 @@ export async function handleRequest(request, env, ctx) {
       response = await handleTimesheets(request, env, user);
     } else if (path.startsWith('/api/kpis')) {
       response = await handleKPIs(request, env, user);
+    } else if (path.startsWith('/api/dashboard')) {
+      response = await handleDashboard(request, env, user);
     } else if (path.startsWith('/api/users')) {
       response = await handleUsers(request, env, user);
     } else if (path.startsWith('/api/groups')) {
