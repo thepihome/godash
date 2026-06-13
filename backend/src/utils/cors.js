@@ -11,22 +11,41 @@ function normalizeOrigin(origin) {
 }
 
 /**
+ * Allowed origins from FRONTEND_URL and/or comma-separated FRONTEND_URLS.
+ * Example: FRONTEND_URLS=https://gobunny.pages.dev,https://godash.gobunnyy.com
+ */
+export function getAllowedOrigins(env) {
+  const raw = [env.FRONTEND_URLS, env.FRONTEND_URL].filter(Boolean).join(',');
+  if (!raw || raw.trim() === '*') return ['*'];
+
+  const origins = new Set();
+  raw.split(',').forEach((entry) => {
+    const normalized = normalizeOrigin(entry.trim());
+    if (normalized) origins.add(normalized);
+  });
+
+  return origins.size > 0 ? [...origins] : ['*'];
+}
+
+function isOriginAllowed(allowedOrigins, requestOrigin) {
+  if (allowedOrigins.includes('*')) return true;
+  if (!requestOrigin) return false;
+  return allowedOrigins.includes(normalizeOrigin(requestOrigin));
+}
+
+/**
  * Get CORS headers based on request origin
  */
 export function getCorsHeaders(env, requestOrigin = null) {
-  const allowedOrigin = normalizeOrigin(env.FRONTEND_URL || '*');
-  
-  // If we have a request origin, check if it matches (normalized)
+  const allowedOrigins = getAllowedOrigins(env);
+
   let origin = '*';
-  if (requestOrigin) {
-    const normalizedRequestOrigin = normalizeOrigin(requestOrigin);
-    if (allowedOrigin === '*' || normalizedRequestOrigin === allowedOrigin) {
-      origin = normalizedRequestOrigin;
-    }
-  } else if (allowedOrigin !== '*') {
-    origin = allowedOrigin;
+  if (requestOrigin && isOriginAllowed(allowedOrigins, requestOrigin)) {
+    origin = normalizeOrigin(requestOrigin);
+  } else if (!allowedOrigins.includes('*') && allowedOrigins.length === 1) {
+    origin = allowedOrigins[0];
   }
-  
+
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -77,4 +96,3 @@ export function addCorsHeaders(response, env, requestOrOrigin = null) {
     headers: newHeaders,
   });
 }
-

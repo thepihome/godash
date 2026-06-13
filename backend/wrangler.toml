@@ -24,6 +24,9 @@ bucket_name = "resume-uploads"
 # JWT_SECRET - set via: wrangler secret put JWT_SECRET
 # JWT_EXPIRE - set via: wrangler secret put JWT_EXPIRE
 # FRONTEND_URL - set via: wrangler secret put FRONTEND_URL
+# FRONTEND_URLS - comma-separated list for multiple frontends (Pages + custom domain):
+#   wrangler secret put FRONTEND_URLS
+#   https://gobunny.pages.dev,https://godash.gobunnyy.com
 # GOOGLE_CLIENT_ID - your Google OAuth 2.0 Web client ID (for Google Sign-In)
 # Set via: wrangler secret put GOOGLE_CLIENT_ID
 
