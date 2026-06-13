@@ -497,7 +497,7 @@ const Candidates = () => {
       description: `Filtered candidates: ${filterConditions.filter(f => f.field && f.value).map(f => `${f.field}=${f.value}`).join(', ')}`,
       metric_type: 'custom_filter',
       display_order: 0,
-      query_config: JSON.stringify({ type: 'candidate_filter', conditions: filterConditions })
+      query_config: { type: 'candidate_filter', conditions: filterConditions },
     };
     
     api.post('/kpis', kpiData)

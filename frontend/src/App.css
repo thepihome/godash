@@ -43,7 +43,7 @@
 .page-header h1 {
   margin: 0;
   color: var(--text-heading);
-  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
+  font-size: var(--text-2xl);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.2;
@@ -256,6 +256,11 @@
 .btn-danger:hover {
   background-color: #b91c1c;
   border-color: #b91c1c;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .form-group {
