@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { FiMenu, FiX, FiHome, FiBriefcase, FiFileText, FiUsers, FiClock, FiDatabase, FiSettings, FiLogOut, FiLayers, FiUserCheck } from 'react-icons/fi';
 import { APP_UI_VERSION } from '../version';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 import './Layout.css';
 
 const Layout = ({ children }) => {
@@ -50,6 +51,7 @@ const Layout = ({ children }) => {
             </span>
           </Link>
           <div className="navbar-trailing">
+            <ThemeToggle compact />
             <NotificationBell />
             <div className="navbar-user">
               <span>{user?.first_name} {user?.last_name}</span>

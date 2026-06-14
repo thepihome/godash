@@ -9,8 +9,9 @@ module.exports = defineConfig({
   testMatch: ['**/*.spec.js'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: 1,
   workers: process.env.CI ? 2 : undefined,
+  globalSetup: require.resolve('./global-setup'),
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
@@ -33,7 +34,7 @@ module.exports = defineConfig({
           process.env.PLAYWRIGHT_WEB_COMMAND ||
           'npx --yes serve -s build -l 3000',
         cwd: path.join(__dirname, '../../frontend'),
-        url: config.baseURL,
+        url: `${config.baseURL.replace(/\/$/, '')}/login`,
         reuseExistingServer: true,
         timeout: 60_000,
       },
