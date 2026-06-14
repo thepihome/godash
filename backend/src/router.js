@@ -138,12 +138,16 @@ export async function handleRequest(request, env, ctx) {
     const authResult = await authenticate(request, env);
     if (authResult.error) {
       console.log('Authentication failed:', authResult.error, 'for path:', path);
-      return new Response(
-        JSON.stringify({ error: authResult.error }),
-        {
-          status: authResult.status || 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+      return addCorsHeaders(
+        new Response(
+          JSON.stringify({ error: authResult.error }),
+          {
+            status: authResult.status || 401,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        ),
+        env,
+        request
       );
     }
 
